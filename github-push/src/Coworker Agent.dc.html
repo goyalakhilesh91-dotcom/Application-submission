@@ -30,10 +30,10 @@
 </style>
 </helmet>
 
-<div style="width:100%; height:100vh; min-height:560px; display:flex; flex-direction:column; background:#e6e0d2; font-family:'DM Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased;">
+<div style="width:100%; min-height:100vh; display:flex; flex-direction:column; background:#e6e0d2; font-family:'DM Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased;">
 
   <!-- GUIDED TOUR CONTROLLER (not part of the app) -->
-  <div style="flex:none; padding:14px 22px 12px; display:flex; flex-direction:column; gap:9px;">
+  <div style="flex:none; padding:10px 22px 9px; display:flex; flex-direction:column; gap:7px;">
     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
       <span style="font-size:9.5px; font-weight:600; letter-spacing:.16em; color:#7a7468; white-space:nowrap;">GUIDED TOUR</span>
       <span style="font-size:12.5px; font-weight:600; color:#3a3730; white-space:nowrap;">{{ tourTitle }}</span>
@@ -73,7 +73,7 @@
     </div>
   </div>
 
-<div ref="{{ frameRef }}" style="position:relative; flex:1; min-height:0; margin:0 14px 14px; border-radius:14px; border:1px solid rgba(0,0,0,.1); box-shadow:0 10px 30px rgba(28,26,20,.09); overflow:hidden; background:#f6f3eb; color:#1c1c20; font-family:'DM Sans',system-ui,sans-serif;">
+<div ref="{{ frameRef }}" style="position:relative; flex:1; height:760px; min-height:760px; margin:0 14px 14px; border-radius:14px; border:1px solid rgba(0,0,0,.1); box-shadow:0 10px 30px rgba(28,26,20,.09); overflow:hidden; background:#f6f3eb; color:#1c1c20; font-family:'DM Sans',system-ui,sans-serif;">
 
   <!-- LEFT RAIL -->
   <div style="position:absolute; left:0; top:0; bottom:0; width:74px; background:#ffffff; border-right:1px solid rgba(0,0,0,.05); display:flex; flex-direction:column; align-items:center; padding:14px 0 16px; z-index:30;">
@@ -1239,9 +1239,9 @@ class Component extends DCLogic {
     while (sc && sc !== frame) {
       const oy = getComputedStyle(sc).overflowY;
       if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 4) {
-        const r = el.getBoundingClientRect(), c = sc.getBoundingClientRect();
-        const want = sc.scrollTop + (r.top - c.top) - 18;
-        if (Math.abs(want - sc.scrollTop) > 6) sc.scrollTop = Math.max(0, want);
+        const rr = el.getBoundingClientRect(), c = sc.getBoundingClientRect();
+        const want = Math.max(0, sc.scrollTop + (rr.top - c.top) - 18);
+        if (Math.abs(want - sc.scrollTop) > 2) sc.scrollTop = want;
         break;
       }
       sc = sc.parentElement;
@@ -1254,7 +1254,18 @@ class Component extends DCLogic {
     const pad = 6;
     const top = Math.max(4, r.top - f.top - pad), left = Math.max(4, r.left - f.left - pad);
     const w = Math.min(r.width + pad * 2, f.width - left - 8);
-    const h = Math.min(r.height + pad * 2, 300, Math.max(96, (window.innerHeight || f.height) - (f.top + top) - 24));
+    const room = Math.max(120, Math.min(f.bottom, window.innerHeight || f.bottom) - (f.top + top) - 16);
+    let h = r.height + pad * 2;
+    if (h > room) {
+      // end the ring on a child boundary so it never cuts a card in half
+      let fit = 0;
+      for (const kid of el.children) {
+        const kb = kid.getBoundingClientRect().bottom - r.top + pad * 2;
+        if (kb > room) break;
+        fit = kb;
+      }
+      h = fit > 90 ? fit : room;
+    }
     const tipW = 288, gap = 14;
     const fh = Math.max(240, Math.min(f.height, (window.innerHeight || f.height) - f.top - 8));
     let tipLeft = left + w + gap, tipTop = top;
@@ -1273,9 +1284,11 @@ class Component extends DCLogic {
   componentDidMount() { this.frameRef = this.frameRef || React.createRef(); setTimeout(() => this.measureTour(), 60); }
   componentDidUpdate() {
     if (!this.state.tourOn) return;
+    // the re-render resets inner scroll positions — re-apply and re-measure immediately
+    this.measureTour();
     clearTimeout(this._mt1); clearTimeout(this._mt2);
-    this._mt1 = setTimeout(() => this.measureTour(), 40);
-    this._mt2 = setTimeout(() => this.measureTour(), 220);
+    this._mt1 = setTimeout(() => this.measureTour(), 60);
+    this._mt2 = setTimeout(() => this.measureTour(), 260);
   }
 
   goTour(i) {
