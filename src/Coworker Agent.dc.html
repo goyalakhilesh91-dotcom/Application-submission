@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#343ced"/><rect x="120" y="90" width="160" height="120" rx="24" fill="#F6F3EB"/><circle cx="200" cy="150" r="20" fill="#343ced"/><ellipse cx="200" cy="150" rx="46" ry="20" fill="none" stroke="#343ced" stroke-width="7" transform="rotate(-32 200 150)"/></svg>
+</template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#f6f3eb; }
+  * { box-sizing:border-box; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:rgba(0,0,0,.13); border-radius:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  a { color:#343ced; text-decoration:none; }
+  a:hover { color:#343ced; }
+  [contenteditable]:focus { outline:none; }
+  @keyframes coPanel { from { opacity:0; transform:translateX(26px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes coFade { from { opacity:0; } to { opacity:1; } }
+  @keyframes coRise { from { opacity:0; transform:translateY(14px) scale(.99); } to { opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes coPulse { 0%,100% { opacity:.35; transform:scale(1); } 50% { opacity:1; transform:scale(1.35); } }
+</style>
+</helmet>
+
+<div style="width:100%; min-height:100vh; display:flex; flex-direction:column; background:#e6e0d2; font-family:'DM Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased;">
+
+  <!-- GUIDED TOUR CONTROLLER (not part of the app) -->
+  <div style="flex:none; padding:10px 22px 9px; display:flex; flex-direction:column; gap:7px;">
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <span style="font-size:9.5px; font-weight:600; letter-spacing:.16em; color:#7a7468; white-space:nowrap;">GUIDED TOUR</span>
+      <span style="font-size:12.5px; font-weight:600; color:#3a3730; white-space:nowrap;">{{ tourTitle }}</span>
+      <span style="font-size:11.5px; color:#8a8478; white-space:nowrap;">{{ tourPos }}</span>
+      <div style="flex:1;"></div>
+      <div style="display:flex; align-items:center; gap:6px; flex:none;">
+        <sc-if value="{{ tourOn }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div onClick="{{ tourPrev }}" style="padding:6px 12px; border-radius:8px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.75); font-size:11.5px; font-weight:500; color:#4a4a51; cursor:pointer; white-space:nowrap;" style-hover="background:#ffffff">Back</div>
+            <sc-if value="{{ notTourEnd }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ tourNext }}" style="padding:6px 13px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap;" style-hover="background:#2a31d4">Next</div>
+            </sc-if>
+            <sc-if value="{{ atTourEnd }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ tourRestart }}" style="padding:6px 13px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap;" style-hover="background:#2a31d4">Start over</div>
+            </sc-if>
+            <div onClick="{{ tourStop }}" style="padding:6px 11px; border-radius:8px; font-size:11.5px; color:#7a7468; cursor:pointer; white-space:nowrap;" style-hover="color:#3a3730">Exit tour</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ tourOff }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ tourStart }}" style="padding:6px 13px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap;" style-hover="background:#2a31d4">Resume tour</div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+      <sc-for list="{{ tourDots }}" as="d" hint-placeholder-count="15">
+        <div onClick="{{ d.onClick }}" style="width:{{ d.w }}; height:6px; border-radius:3px; background:{{ d.bg }}; cursor:pointer; flex:none;" style-hover="background:#343ced"></div>
+      </sc-for>
+      <span style="margin-left:8px; font-size:11px; color:#8a8478; white-space:nowrap;">Follow the highlight inside the app</span>
+      <div style="flex:1;"></div>
+      <div style="display:flex; align-items:center; gap:4px; flex:none;">
+        <span style="font-size:10.5px; color:#9a9488; white-space:nowrap; margin-right:4px;">Jump to</span>
+        <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="3">
+          <div onClick="{{ j.onClick }}" style="padding:4px 9px; border-radius:7px; font-size:11px; font-weight:500; color:{{ j.fg }}; cursor:pointer; white-space:nowrap;" style-hover="background:rgba(255,255,255,.7)">{{ j.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+<div ref="{{ frameRef }}" style="position:relative; flex:1; height:760px; min-height:760px; margin:0 14px 14px; border-radius:14px; border:1px solid rgba(0,0,0,.1); box-shadow:0 10px 30px rgba(28,26,20,.09); overflow:hidden; background:#f6f3eb; color:#1c1c20; font-family:'DM Sans',system-ui,sans-serif;">
+
+  <!-- LEFT RAIL -->
+  <div style="position:absolute; left:0; top:0; bottom:0; width:74px; background:#ffffff; border-right:1px solid rgba(0,0,0,.05); display:flex; flex-direction:column; align-items:center; padding:14px 0 16px; z-index:30;">
+    <img src="assets/glean-icon.png" alt="Glean" style="width:27px; height:27px; border-radius:50%; object-fit:contain; margin-bottom:22px;">
+
+    <div onClick="{{ goHome }}" style="width:100%; padding:9px 0; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; color:#1c1c20;" style-hover="background:rgba(0,0,0,.035)">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8.7" cy="8.7" r="5.1"></circle><path d="M12.6 12.6 16.8 16.8"></path></svg>
+      <span style="font-size:10.5px; letter-spacing:.01em;">Home</span>
+    </div>
+    <div style="width:100%; padding:9px 0; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; color:#74747a;" style-hover="color:#1c1c20">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6.7"></circle><path d="M10 6.3l.95 2.4 2.4.95-2.4.95-.95 2.4-.95-2.4-2.4-.95 2.4-.95.95-2.4Z"></path></svg>
+      <span style="font-size:10.5px;">Chat</span>
+    </div>
+    <div style="width:100%; padding:9px 0; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; color:#74747a;" style-hover="color:#1c1c20">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="7.4" r="2.8"></circle><path d="M3.4 16.2c.5-2.5 2.4-3.9 4.6-3.9s4.1 1.4 4.6 3.9"></path><circle cx="14.6" cy="8" r="2"></circle></svg>
+      <span style="font-size:10.5px;">Directory</span>
+    </div>
+    <div style="width:100%; padding:9px 0; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; color:#74747a;" style-hover="color:#1c1c20">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 5.7C8.4 4.5 6 4.3 3.7 4.7v9.6c2.3-.4 4.7-.2 6.3 1 1.6-1.2 4-1.4 6.3-1V4.7c-2.3-.4-4.7-.2-6.3 1Z"></path><path d="M10 5.7v10.6"></path></svg>
+      <span style="font-size:10.5px;">Knowledge</span>
+    </div>
+
+    <div style="width:34px; height:1px; background:rgba(0,0,0,.1); margin:10px 0;"></div>
+
+    <div data-tour="rail" onClick="{{ openCoworker }}" style="position:relative; width:100%; padding:9px 0; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; color:{{ coworkerRailColor }};" style-hover="background:rgba(0,0,0,.035)">
+      <div style="position:absolute; left:0; top:6px; bottom:6px; width:2px; border-radius:0 2px 2px 0; background:{{ coworkerRailBar }};"></div>
+      <div style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3.1"></circle><ellipse cx="10" cy="10" rx="7.2" ry="3.1" transform="rotate(-32 10 10)"></ellipse></svg>
+        <div style="position:absolute; top:-3px; right:-7px; min-width:15px; height:15px; padding:0 4px; border-radius:8px; background:#343ced; color:#ffffff; font-size:9.5px; font-weight:700; display:flex; align-items:center; justify-content:center;">3</div>
+      </div>
+      <span style="font-size:10px; line-height:1.2; text-align:center; max-width:66px;">Proactive coworker</span>
+    </div>
+
+    <div style="flex:1;"></div>
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#5f5f66" stroke-width="1.6" style="margin-bottom:18px;"><path d="M12.4 3.6a3.6 3.6 0 0 0 4.3 5.1L9.4 16A2 2 0 1 1 6.6 13.2l7.3-7.3a3.6 3.6 0 0 1-1.5-2.3Z"></path></svg>
+    <div style="width:30px; height:30px; border-radius:50%; background:linear-gradient(150deg,#343ced,#2a31d4); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; margin-bottom:12px;">A</div>
+    <img src="assets/glean-wordmark.png" alt="glean" style="width:56px; height:auto; object-fit:contain;">
+  </div>
+
+  <!-- HOMEPAGE -->
+  <div style="position:absolute; left:74px; right:0; top:0; bottom:0; display:flex; flex-direction:column;">
+    <div style="display:flex; justify-content:flex-end; align-items:center; gap:14px; padding:16px 26px;">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#57575d" stroke-width="1.6"><path d="M3.5 6h13M3.5 10h13M3.5 14h13"></path><circle cx="7.5" cy="6" r="1.6" fill="#ffffff"></circle><circle cx="12.5" cy="14" r="1.6" fill="#ffffff"></circle></svg>
+      <div style="display:flex; align-items:center; gap:7px; padding:7px 14px; border-radius:999px; background:#ffffff; border:1px solid rgba(0,0,0,.09); font-size:13px; font-weight:500; cursor:pointer;" style-hover="background:#f0f0f2">
+        New
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#57575d" stroke-width="1.5"><path d="M2 4l3 3 3-3"></path></svg>
+      </div>
+    </div>
+
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; padding-top:6vh;">
+      <div style="width:100%; max-width:840px; padding:0 24px;">
+        <h1 style="margin:0 0 22px 2px; font-size:34px; line-height:1.1; font-weight:600; letter-spacing:-.015em;">Good afternoon, Akhilesh</h1>
+
+        <div style="background:#ffffff; border-radius:20px; padding:0 0 16px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05);">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px 0;">
+            <div style="display:flex; gap:20px;">
+              <div style="position:relative; display:flex; align-items:center; gap:7px; padding-bottom:12px; font-size:13.5px; font-weight:600; color:#343ced;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.4"></circle><path d="M10.4 10.4 14 14"></path></svg>
+                Search
+                <div style="position:absolute; left:-4px; right:-4px; bottom:0; height:2.5px; border-radius:2px; background:#343ced;"></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:7px; padding-bottom:12px; font-size:13.5px; font-weight:500; color:#57575d; cursor:pointer;" style-hover="color:#e6e6e8">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="3" width="12" height="9" rx="2.6"></rect><path d="M5.6 12 5 14.4 7.6 12"></path></svg>
+                Chat
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:7px; font-size:11.5px; color:#5b5b61;">
+              <span>Chat</span>
+              <span style="padding:3px 7px; border-radius:6px; background:#f6f3eb; font-size:10.5px; white-space:nowrap;">⇧ Shift</span>
+              <span style="padding:3px 7px; border-radius:6px; background:#f6f3eb; font-size:10.5px; white-space:nowrap;">↵ Enter</span>
+            </div>
+          </div>
+          <div style="margin:0 16px; padding:15px 20px; border-radius:999px; background:#f6f3eb; display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:14.5px; color:#5f5f66; white-space:nowrap;">Tip: press Shift+Enter to Chat</span>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#5f5f66" stroke-width="1.5"><circle cx="10" cy="10" r="7"></circle><path d="M10 9v4.5M10 6.6v.6"></path></svg>
+          </div>
+        </div>
+
+      </div>
+      <div style="flex:1;"></div>
+      <div style="padding:18px 0 22px; font-size:13px; font-weight:500; color:#3a3a40;">Join meetings and discover relevant content ↓</div>
+    </div>
+  </div>
+
+  <div style="position:absolute; right:20px; bottom:20px; z-index:20; width:40px; height:40px; border-radius:50%; background:#ffffff; border:1px solid rgba(0,0,0,.08); box-shadow:0 6px 18px rgba(20,22,40,.1); display:flex; align-items:center; justify-content:center; font-size:16px; color:#3a3a40; cursor:pointer;">?</div>
+
+  <!-- SCRIM -->
+  <sc-if value="{{ scrimOn }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ goHome }}" style="position:absolute; inset:0; z-index:40; background:rgba(28,28,36,.16); backdrop-filter:blur(3px); animation:coFade .22s ease both;"></div>
+  </sc-if>
+
+  <!-- STATE 2 — YOUR DAY (one list) -->
+  <sc-if value="{{ showList }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; z-index:35; left:74px; right:0; top:0; bottom:0; background:#f6f3eb; display:flex; justify-content:center;">
+      <div style="width:100%; max-width:1240px; display:flex; flex-direction:column; overflow:hidden;">
+
+        <div style="padding:34px 36px 0; flex:none;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:9px; min-width:0;">
+              <span style="font-size:10px; font-weight:600; letter-spacing:.15em; color:#343ced; white-space:nowrap;">PROACTIVE COWORKER</span>
+            </div>
+            <span style="font-size:11.5px; color:#5f5f66; white-space:nowrap; flex:none;">Monday 14 September · 09:12</span>
+          </div>
+
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:18px;">
+            <div style="display:flex; align-items:center; gap:14px; min-width:0;">
+              <div style="width:42px; height:42px; flex:none; border-radius:50%; background:#343ced; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; color:#fff;">A</div>
+              <div style="min-width:0;">
+                <h2 style="margin:0 0 4px; font-size:25px; font-weight:600; letter-spacing:-.015em; line-height:1.2;">{{ dayTitle }}</h2>
+                <p style="margin:0; font-size:12.5px; line-height:1.5; color:#57575d; text-wrap:pretty;">{{ daySub }}</p>
+              </div>
+            </div>
+            <div onClick="{{ openContext }}" style="flex:none; padding:9px 14px; border-radius:999px; background:#ffffff; border:1px solid rgba(0,0,0,.1); font-size:12px; font-weight:500; color:#343ced; cursor:pointer; white-space:nowrap;" style-hover="border-color:rgba(52,60,237,.45)">See what I have learned about you →</div>
+          </div>
+
+        </div>
+
+        <div style="flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,352px); gap:18px; padding:0 36px 26px; overflow:hidden;">
+
+          <div style="min-width:0; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:2px;">
+            <div data-tour="band" style="background:#343ced; border-radius:18px; padding:20px 22px 18px; color:#ffffff;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:18px; flex-wrap:wrap;">
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size:19px; font-weight:600; line-height:1.3; letter-spacing:-.01em; text-wrap:pretty;">{{ bandHeadline }}</div>
+                  <div style="margin-top:6px; font-size:12.5px; line-height:1.5; color:rgba(255,255,255,.78); text-wrap:pretty;">{{ bandSub }}</div>
+                </div>
+                <div style="flex:none; display:flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; background:rgba(255,255,255,.14);">
+                  <span style="width:6px; height:6px; border-radius:50%; background:#d8fd49; animation:coPulse 1.8s ease-in-out infinite;"></span>
+                  <span style="font-size:11.5px; font-weight:600; white-space:nowrap;">Working now</span>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; gap:3px; height:8px;">
+                <sc-for list="{{ bandSegs }}" as="sg" hint-placeholder-count="4">
+                  <div style="width:{{ sg.w }}; height:8px; border-radius:4px; background:{{ sg.bg }};"></div>
+                </sc-for>
+              </div>
+
+              <div data-tour="band-chips" style="margin-top:14px; display:flex; flex-wrap:wrap; gap:7px;">
+                <sc-for list="{{ bandLegend }}" as="lg" hint-placeholder-count="4">
+                  <div onClick="{{ lg.onClick }}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px; background:{{ lg.bg }}; border:1px solid {{ lg.border }}; cursor:pointer;" style-hover="background:rgba(255,255,255,.14)">
+                    <span style="width:7px; height:7px; border-radius:50%; background:{{ lg.dot }}; flex:none;"></span>
+                    <span style="font-size:11.5px; font-weight:700; color:#ffffff;">{{ lg.n }}</span>
+                    <span style="font-size:11.5px; color:rgba(255,255,255,.88); white-space:nowrap;">{{ lg.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:12px; font-size:10.5px; color:rgba(255,255,255,.7);">Tap any of the four to see just those.</div>
+            </div>
+
+            <div data-tour="kind-filters" style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px; padding:0 2px;">
+              <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">FILTER BY KIND</span>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <sc-for list="{{ typeFilters }}" as="tf" hint-placeholder-count="4">
+                  <div onClick="{{ tf.onClick }}" title="{{ tf.label }}" style="display:flex; align-items:center; gap:6px; padding:6px 11px; border-radius:9px; background:{{ tf.bg }}; color:{{ tf.fg }}; border:1px solid rgba(0,0,0,.07); cursor:pointer; white-space:nowrap;" style-hover="background:rgba(0,0,0,.05)">
+                    <sc-if value="{{ tf.isMeeting }}" hint-placeholder-val="{{ false }}">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.2" width="12" height="10.8" rx="2.2"></rect><path d="M2 6.4h12M5.4 2v2.4M10.6 2v2.4"></path></svg>
+                    </sc-if>
+                    <sc-if value="{{ tf.isTicket }}" hint-placeholder-val="{{ false }}">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.6 2.2H3.2A1 1 0 0 0 2.2 3.2v5.4L9 15.4a1 1 0 0 0 1.4 0l4-4a1 1 0 0 0 0-1.4L8.6 2.2Z"></path><circle cx="5.4" cy="5.4" r=".9" fill="currentColor" stroke="none"></circle></svg>
+                    </sc-if>
+                    <sc-if value="{{ tf.isEmail }}" hint-placeholder-val="{{ false }}">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="2"></rect><path d="M2.4 4.6 8 8.8l5.6-4.2"></path></svg>
+                    </sc-if>
+                    <sc-if value="{{ tf.isSlack }}" hint-placeholder-val="{{ false }}">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.2 2 4.8 14M11.2 2 9.8 14M2.4 5.6h11.2M2 10.4h11.2"></path></svg>
+                    </sc-if>
+                    <span style="font-size:11.5px; font-weight:500;">{{ tf.count }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:1;"></div>
+              <span style="font-size:11px; color:#8a8a90; white-space:nowrap;">{{ shownCount }} showing</span>
+              <sc-if value="{{ filtered }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ clearFilters }}" style="font-size:11px; font-weight:600; color:#343ced; cursor:pointer; white-space:nowrap;" style-hover="color:#2a31d4">Clear</div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ hasYourRows }}" hint-placeholder-val="{{ true }}">
+              <div data-tour="your-calls" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                <div style="display:flex; align-items:center; gap:9px; padding:0 2px;">
+                  <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#1c1c20; white-space:nowrap;">YOUR CALLS</span>
+                  <span style="height:1px; flex:1; background:rgba(0,0,0,.1);"></span>
+                  <span style="font-size:11px; color:#8a8a90; white-space:nowrap;">{{ yourHead }}</span>
+                </div>
+
+                <sc-for list="{{ yourRows }}" as="t" hint-placeholder-count="5">
+                  <div onClick="{{ t.onOpen }}" style="display:flex; gap:14px; background:{{ t.cardBg }}; border:1px solid {{ t.cardBorder }}; border-radius:14px; padding:15px 17px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.03);" style-hover="border-color:rgba(52,60,237,.4)">
+                    <div style="flex:none; width:34px; height:34px; border-radius:10px; background:{{ t.iconBg }}; color:{{ t.iconFg }}; display:flex; align-items:center; justify-content:center;">
+                  <sc-if value="{{ t.isMeeting }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.2" width="12" height="10.8" rx="2.2"></rect><path d="M2 6.4h12M5.4 2v2.4M10.6 2v2.4"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ t.isTicket }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.6 2.2H3.2A1 1 0 0 0 2.2 3.2v5.4L9 15.4a1 1 0 0 0 1.4 0l4-4a1 1 0 0 0 0-1.4L8.6 2.2Z"></path><circle cx="5.4" cy="5.4" r=".9" fill="currentColor" stroke="none"></circle></svg>
+                  </sc-if>
+                  <sc-if value="{{ t.isEmail }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="2"></rect><path d="M2.4 4.6 8 8.8l5.6-4.2"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ t.isSlack }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.2 2 4.8 14M11.2 2 9.8 14M2.4 5.6h11.2M2 10.4h11.2"></path></svg>
+                  </sc-if>
+                    </div>
+                    <div style="min-width:0; flex:1;">
+                      <div style="display:flex; align-items:baseline; gap:10px;">
+                        <div style="min-width:0; flex:1; font-size:13.5px; font-weight:600; line-height:1.4; color:#1c1c20; text-wrap:pretty;">{{ t.title }}</div>
+                        <span style="flex:none; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:{{ t.stateFg }}; white-space:nowrap;">
+                          <span style="width:5px; height:5px; border-radius:50%; background:{{ t.stateFg }};"></span>{{ t.stateLabel }}
+                        </span>
+                      </div>
+                      <div style="margin-top:4px; font-size:12px; line-height:1.5; color:#57575d; text-wrap:pretty;">{{ t.why }}</div>
+                      <div style="margin-top:9px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div onClick="{{ t.onOpen }}" style="padding:6px 12px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap;" style-hover="background:#2a31d4">{{ t.primary }}</div>
+                        <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:10.5px; color:#8a8a90;">
+                          <span style="font-weight:600; color:{{ t.whenFg }};">{{ t.when }}</span>
+                          <span style="width:3px; height:3px; border-radius:50%; background:rgba(0,0,0,.16); flex:none;"></span>
+                          <span>{{ t.kind }}</span>
+                          <sc-if value="{{ t.irreversible }}" hint-placeholder-val="{{ false }}">
+                            <span style="display:flex; align-items:center; gap:5px; color:#a13b25; font-weight:600;">
+                              <span style="width:3px; height:3px; border-radius:50%; background:#a13b25;"></span>can't be undone
+                            </span>
+                          </sc-if>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ hasAgentRows }}" hint-placeholder-val="{{ true }}">
+              <div data-tour="agent-has" style="display:flex; flex-direction:column; gap:6px; margin-top:16px;">
+                <div style="display:flex; align-items:center; gap:9px; padding:0 2px;">
+                  <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#266749; white-space:nowrap;">THE AGENT HAS THIS</span>
+                  <span style="height:1px; flex:1; background:rgba(38,103,73,.2);"></span>
+                  <span style="font-size:11px; color:#8a8a90; white-space:nowrap;">{{ agentHead }} · nothing needed from you</span>
+                </div>
+
+                <sc-for list="{{ agentRows }}" as="g" hint-placeholder-count="5">
+                  <div onClick="{{ g.onOpen }}" style="display:flex; gap:13px; align-items:center; background:rgba(255,255,255,.5); border:1px solid rgba(0,0,0,.05); border-radius:12px; padding:12px 15px; cursor:pointer;" style-hover="background:#ffffff">
+                    <div style="flex:none; width:28px; height:28px; border-radius:9px; background:{{ g.iconBg }}; color:{{ g.iconFg }}; display:flex; align-items:center; justify-content:center;">
+                  <sc-if value="{{ g.isMeeting }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3.2" width="12" height="10.8" rx="2.2"></rect><path d="M2 6.4h12M5.4 2v2.4M10.6 2v2.4"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ g.isTicket }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8.6 2.2H3.2A1 1 0 0 0 2.2 3.2v5.4L9 15.4a1 1 0 0 0 1.4 0l4-4a1 1 0 0 0 0-1.4L8.6 2.2Z"></path><circle cx="5.4" cy="5.4" r=".9" fill="currentColor" stroke="none"></circle></svg>
+                  </sc-if>
+                  <sc-if value="{{ g.isEmail }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="2"></rect><path d="M2.4 4.6 8 8.8l5.6-4.2"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ g.isSlack }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.2 2 4.8 14M11.2 2 9.8 14M2.4 5.6h11.2M2 10.4h11.2"></path></svg>
+                  </sc-if>
+                    </div>
+                    <div style="min-width:0; flex:1;">
+                      <div style="font-size:12.5px; font-weight:600; line-height:1.4; color:#1c1c20; text-wrap:pretty;">{{ g.title }}</div>
+                      <div style="margin-top:3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:10.5px; color:#6b6b72;">
+                        <span>{{ g.kind }}</span>
+                        <span style="width:3px; height:3px; border-radius:50%; background:rgba(0,0,0,.16); flex:none;"></span>
+                        <span>{{ g.when }}</span>
+                      </div>
+                    </div>
+                    <sc-if value="{{ g.running }}" hint-placeholder-val="{{ false }}">
+                      <span style="flex:none; display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:600; color:#343ced; white-space:nowrap;">
+                        <span style="width:5px; height:5px; border-radius:50%; background:#343ced; animation:coPulse 1.6s ease-in-out infinite;"></span>running
+                      </span>
+                    </sc-if>
+                    <sc-if value="{{ g.finished }}" hint-placeholder-val="{{ false }}">
+                      <span style="flex:none; display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:600; color:#266749; white-space:nowrap;">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.4 8.4 6.4 11.4 12.6 5"></path></svg>done
+                      </span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="min-width:0; overflow-y:auto; display:flex; flex-direction:column; gap:12px;">
+
+            <sc-if value="{{ noTaskOpen }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div data-tour="signals" style="background:#ffffff; border:1px solid rgba(0,0,0,.07); border-radius:16px; padding:16px 18px 14px;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                    <span style="width:6px; height:6px; border-radius:50%; background:#266749; animation:coPulse 2.2s ease-in-out infinite;"></span>
+                    <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90;">COMING IN</span>
+                    <div style="flex:1;"></div>
+                    <span style="font-size:10.5px; color:#6b6b72; white-space:nowrap;">watching 9 tools</span>
+                  </div>
+                  <div style="display:flex; flex-direction:column;">
+                    <sc-for list="{{ signals }}" as="sg" hint-placeholder-count="6">
+                      <div style="display:flex; gap:10px; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.05);">
+                        <div style="flex:none; width:22px; height:22px; border-radius:7px; background:rgba(0,0,0,.05); color:#57575d; display:flex; align-items:center; justify-content:center;">
+                          <sc-if value="{{ sg.isMeeting }}" hint-placeholder-val="{{ false }}">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3.2" width="12" height="10.8" rx="2.2"></rect><path d="M2 6.4h12"></path></svg>
+                          </sc-if>
+                          <sc-if value="{{ sg.isTicket }}" hint-placeholder-val="{{ false }}">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.6 2.2H3.2A1 1 0 0 0 2.2 3.2v5.4L9 15.4a1 1 0 0 0 1.4 0l4-4a1 1 0 0 0 0-1.4L8.6 2.2Z"></path></svg>
+                          </sc-if>
+                          <sc-if value="{{ sg.isEmail }}" hint-placeholder-val="{{ false }}">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="2"></rect><path d="M2.4 4.6 8 8.8l5.6-4.2"></path></svg>
+                          </sc-if>
+                          <sc-if value="{{ sg.isSlack }}" hint-placeholder-val="{{ false }}">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.2 2 4.8 14M11.2 2 9.8 14M2.4 5.6h11.2M2 10.4h11.2"></path></svg>
+                          </sc-if>
+                        </div>
+                        <div style="min-width:0; flex:1;">
+                          <div style="display:flex; align-items:baseline; gap:7px;">
+                            <span style="font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#8a8a90; white-space:nowrap;">{{ sg.kind }}</span>
+                            <span style="font-size:10px; color:#a0a0a6; white-space:nowrap;">{{ sg.time }}</span>
+                          </div>
+                          <div style="margin-top:3px; font-size:11.5px; line-height:1.45; color:#1c1c20; text-wrap:pretty;">{{ sg.text }}</div>
+                          <div style="margin-top:3px; font-size:10.5px; color:#343ced; text-wrap:pretty;">→ {{ sg.out }}</div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="margin-top:10px; font-size:10.5px; line-height:1.5; color:#8a8a90; text-wrap:pretty;">Every signal above turned into something on your list — or was deliberately left alone.</div>
+                </div>
+
+                <div data-tour="goals-card" style="background:#ffffff; border:1px solid rgba(0,0,0,.07); border-radius:16px; padding:16px 18px 14px;">
+                  <div style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; margin-bottom:13px;">YOUR GOALS</div>
+                  <div style="display:flex; flex-direction:column; gap:13px;">
+                    <sc-for list="{{ goalsMini }}" as="gm" hint-placeholder-count="4">
+                      <div>
+                        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:9px;">
+                          <span style="font-size:11.5px; font-weight:600; color:#1c1c20; text-wrap:pretty;">{{ gm.title }}</span>
+                          <span style="font-size:10.5px; font-weight:600; color:#6b6b72; white-space:nowrap; flex:none;">{{ gm.pct }}</span>
+                        </div>
+                        <div style="margin:7px 0 5px; height:3px; border-radius:2px; background:rgba(0,0,0,.07); overflow:hidden;">
+                          <div style="width:{{ gm.pct }}; height:3px; border-radius:2px; background:{{ gm.bar }};"></div>
+                        </div>
+                        <div style="display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; font-size:10px; color:#8a8a90;">
+                          <span>{{ gm.metric }}</span>
+                          <span style="width:3px; height:3px; border-radius:50%; background:rgba(0,0,0,.16); flex:none;"></span>
+                          <span>{{ gm.note }}</span>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="background:#ffffff; border:1px solid rgba(0,0,0,.07); border-radius:16px; padding:16px 18px;">
+                  <div style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; margin-bottom:10px;">CONTROLS</div>
+                  <div onClick="{{ approveAllSafe }}" style="padding:9px 13px; border-radius:9px; border:1px solid rgba(52,60,237,.3); color:#343ced; font-size:12.5px; font-weight:600; text-align:center; cursor:pointer;" style-hover="background:rgba(52,60,237,.08)">Approve all reversible</div>
+                  <div onClick="{{ togglePause }}" style="margin-top:8px; padding:9px 13px; border-radius:9px; border:1px solid rgba(0,0,0,.12); font-size:12.5px; text-align:center; cursor:pointer; color:{{ pauseFg }};" style-hover="background:rgba(0,0,0,.04)">{{ pauseLabel }}</div>
+                  <div style="margin-top:11px; font-size:10.5px; line-height:1.5; color:#8a8a90; text-wrap:pretty;">Anything irreversible waits for you, paused or not.</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ openTaskOn }}" hint-placeholder-val="{{ false }}">
+              <div data-tour="task-detail" style="background:#ffffff; border:1px solid rgba(0,0,0,.07); border-radius:16px; padding:18px 20px 20px; animation:coFade .16s ease both;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0;">
+                    <span style="padding:2.5px 8px; border-radius:6px; background:{{ det.typeBg }}; color:{{ det.typeFg }}; font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">{{ det.typeLabel }}</span>
+                    <span style="padding:2.5px 8px; border-radius:6px; background:{{ det.stateBg }}; color:{{ det.stateFg }}; font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;">{{ det.stateLabel }}</span>
+                  </div>
+                  <div onClick="{{ closeTaskPanel }}" style="flex:none; font-size:13px; color:#8a8a90; cursor:pointer; padding:0 3px;" style-hover="color:#1c1c20">✕</div>
+                </div>
+
+                <div style="font-size:15px; font-weight:600; line-height:1.35; color:#1c1c20; text-wrap:pretty;">{{ det.title }}</div>
+                <div style="margin-top:7px; font-size:12.5px; line-height:1.55; color:#3a3a40; text-wrap:pretty;">{{ det.why }}</div>
+
+                <div style="margin-top:14px; padding:11px 13px; border-radius:11px; background:{{ det.revBg }};">
+                  <div style="font-size:11.5px; font-weight:600; color:{{ det.revFg }};">{{ det.revTitle }}</div>
+                  <div style="margin-top:3px; font-size:11px; line-height:1.5; color:#57575d; text-wrap:pretty;">{{ det.revNote }}</div>
+                </div>
+
+                <div style="margin-top:16px; font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90;">WHY I READ IT THIS WAY</div>
+                <div style="margin-top:9px; display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{ det.reasons }}" as="r" hint-placeholder-count="3">
+                    <div style="display:flex; gap:9px;">
+                      <span style="flex:none; width:4px; height:4px; margin-top:7px; border-radius:50%; background:#343ced;"></span>
+                      <span style="font-size:12px; line-height:1.55; color:#3a3a40; text-wrap:pretty;">{{ r }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="margin-top:16px; font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90;">WHAT I LOOKED AT</div>
+                <div style="margin-top:9px; display:flex; flex-direction:column; gap:7px;">
+                  <sc-for list="{{ det.context }}" as="cx" hint-placeholder-count="2">
+                    <div style="display:grid; grid-template-columns:70px minmax(0,1fr); gap:10px;">
+                      <span style="font-size:10.5px; color:#8a8a90;">{{ cx.k }}</span>
+                      <span style="font-size:11.5px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ cx.v }}</span>
+                    </div>
+                  </sc-for>
+                  <div style="display:grid; grid-template-columns:70px minmax(0,1fr); gap:10px;">
+                    <span style="font-size:10.5px; color:#8a8a90;">Sources</span>
+                    <span style="font-size:11.5px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ det.source }}</span>
+                  </div>
+                  <div style="display:grid; grid-template-columns:70px minmax(0,1fr); gap:10px; align-items:center;">
+                    <span style="font-size:10.5px; color:#8a8a90;">Confidence</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <div style="display:flex; gap:3px;">
+                        <span style="width:16px; height:4px; border-radius:2px; background:{{ det.s1 }};"></span>
+                        <span style="width:16px; height:4px; border-radius:2px; background:{{ det.s2 }};"></span>
+                        <span style="width:16px; height:4px; border-radius:2px; background:{{ det.s3 }};"></span>
+                      </div>
+                      <span style="font-size:11.5px; color:#3a3a40;">{{ det.conf }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:17px; display:flex; flex-direction:column; gap:7px;">
+                  <div onClick="{{ openFullDecision }}" style="padding:10px 14px; border-radius:9px; background:#343ced; color:#ffffff; font-size:12.5px; font-weight:600; text-align:center; cursor:pointer;" style-hover="background:#2a31d4">{{ det.primary }}</div>
+                  <div style="display:flex; gap:7px; flex-wrap:wrap;">
+                    <sc-for list="{{ det.secondary }}" as="s2" hint-placeholder-count="2">
+                      <div style="flex:1; min-width:110px; padding:9px 12px; border-radius:9px; border:1px solid rgba(0,0,0,.12); font-size:12px; color:#3a3a40; text-align:center; cursor:pointer;" style-hover="background:rgba(0,0,0,.04)">{{ s2 }}</div>
+                    </sc-for>
+                  </div>
+                  <div onClick="{{ openFullDecision }}" style="margin-top:4px; font-size:11.5px; font-weight:500; color:#343ced; text-align:center; cursor:pointer;" style-hover="color:#2a31d4">Open the full decision →</div>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- STATE 3 — ONE DECISION EXPANDED -->
+  <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; z-index:35; left:74px; right:0; top:0; bottom:0; background:#f6f3eb; display:flex; justify-content:center;">
+      <div style="width:100%; max-width:960px; display:flex; flex-direction:column; overflow:hidden;">
+      <div data-tour="decision" style="padding:40px 40px 20px; border-bottom:1px solid rgba(0,0,0,.09); flex:none;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <div onClick="{{ backToList }}" style="display:flex; align-items:center; gap:8px; font-size:12px; color:#57575d; cursor:pointer;" style-hover="color:#1c1c20">← Back to today</div>
+          <span style="font-size:12px; color:#5f5f66;">Decision · logged 8:41am</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:11px; flex-wrap:wrap;">
+          <span style="display:flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; background:{{ sel.modeBg }}; color:{{ sel.modeFg }}; font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; font-family:'DM Sans',sans-serif;">
+            <span style="width:4px; height:4px; border-radius:50%; background:{{ sel.modeFg }};"></span>{{ sel.modeLabel }}
+          </span>
+          <span style="padding:3px 8px; border-radius:6px; background:{{ sel.revBg }}; color:{{ sel.revFg }}; font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; font-family:'DM Sans',sans-serif;">{{ sel.revLabel }}</span>
+          <span style="padding:3px 8px; border-radius:6px; background:rgba(0,0,0,.05); color:#343ced; font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; font-family:'DM Sans',sans-serif;">{{ sel.confShort }} confidence</span>
+        </div>
+        <h2 style="margin:0; font-size:21px; font-weight:600; line-height:1.3; letter-spacing:-.01em; max-width:52ch;">{{ sel.title }}</h2>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:26px 40px 30px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:26px; align-content:start;">
+        <div style="display:flex; flex-direction:column; gap:22px; min-width:0;">
+          <div>
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:9px;">WHAT I DECIDED TO DO</div>
+            <div style="font-size:14px; line-height:1.6; color:#26262b; text-wrap:pretty;">{{ sel.decided }}</div>
+          </div>
+
+          <div>
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:9px;">WHY</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ sel.reasons }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex; gap:9px; font-size:13px; line-height:1.55; color:#55555c;">
+                  <span style="color:#343ced; flex:none;">—</span>
+                  <span style="text-wrap:pretty;">{{ r.text }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ sel.hasDraft }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+                <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66;">{{ sel.draftLabel }}</div>
+                <span style="font-size:11px; color:#343ced;">editable</span>
+              </div>
+              <div contenteditable="true" suppressContentEditableWarning="{{ true }}" style="background:#f6f3eb; border-radius:14px; padding:15px 16px; font-size:13px; line-height:1.65; color:#3a3a40; white-space:pre-wrap;" style-focus="border-color:rgba(52,60,237,.5)">{{ sel.draft }}</div>
+            </div>
+          </sc-if>
+
+          <div>
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:10px;">CONTEXT I USED</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ sel.context }}" as="c" hint-placeholder-count="4">
+                <div style="display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:12px 14px; background:#ffffff; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.03);">
+                  <span style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.1em; color:#5b5b61; text-transform:uppercase; padding-top:2px;">{{ c.k }}</span>
+                  <span style="font-size:12.5px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ c.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <div style="background:#ffffff; border-radius:18px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05);">
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:12px;">CONFIDENCE</div>
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;">
+              <div style="display:flex; gap:3px;">
+                <span style="width:22px; height:5px; border-radius:3px; background:{{ sel.s1 }};"></span>
+                <span style="width:22px; height:5px; border-radius:3px; background:{{ sel.s2 }};"></span>
+                <span style="width:22px; height:5px; border-radius:3px; background:{{ sel.s3 }};"></span>
+              </div>
+              <span style="font-size:12.5px; font-weight:600; color:#26262b;">{{ sel.confLong }}</span>
+            </div>
+            <div style="font-size:12px; line-height:1.55; color:#57575d; text-wrap:pretty;">{{ sel.confNote }}</div>
+          </div>
+
+          <div style="background:#ffffff; border-radius:18px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05);">
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:12px;">REVERSIBILITY &amp; BLAST RADIUS</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+              <span style="padding:3px 8px; border-radius:6px; background:{{ sel.revBg }}; color:{{ sel.revFg }}; font-size:10px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; font-family:'DM Sans',sans-serif;">{{ sel.revLabel }}</span>
+              <span style="font-size:12px; color:#55555c;">{{ sel.blastScope }}</span>
+            </div>
+            <div style="font-size:12px; line-height:1.55; color:#57575d; margin-bottom:12px; text-wrap:pretty;">{{ sel.blast }}</div>
+            <div style="padding-top:11px; border-top:1px solid rgba(0,0,0,.08); font-size:12px; line-height:1.55; color:#55555c; text-wrap:pretty;">
+              <span style="color:#343ced; font-weight:600;">{{ sel.routeLabel }}</span> {{ sel.route }}
+            </div>
+          </div>
+
+          <div style="background:#ffffff; border-radius:18px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05);">
+            <div style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:10px; letter-spacing:.14em; color:#5f5f66; margin-bottom:12px;">PEOPLE I PLAN TO INVOLVE</div>
+            <div style="display:flex; flex-direction:column; gap:11px;">
+              <sc-for list="{{ sel.people }}" as="p" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:29px; height:29px; flex:none; border-radius:50%; background:{{ p.bg }}; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">{{ p.initials }}</div>
+                  <div style="min-width:0;">
+                    <div style="font-size:12.5px; font-weight:600; color:#26262b;">{{ p.name }}</div>
+                    <div style="font-size:11px; color:#5b5b61;">{{ p.role }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid rgba(0,0,0,.07); background:rgba(246,243,235,.94); padding:16px 40px; flex:none;">
+        <sc-if value="{{ rejecting }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:12.5px; color:#55555c; margin-bottom:10px;">One tap tells me why — I'll apply it to similar work.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <sc-for list="{{ reasons }}" as="rz" hint-placeholder-count="4">
+                <div onClick="{{ rz.onClick }}" style="padding:7px 13px; border-radius:999px; background:rgba(0,0,0,.035); border:1px solid rgba(0,0,0,.07); font-size:12px; color:#3a3a40; cursor:pointer;" style-hover="background:rgba(184,69,46,.1); border-color:rgba(184,69,46,.35)">{{ rz.label }}</div>
+              </sc-for>
+              <div onClick="{{ cancelReject }}" style="padding:7px 11px; font-size:12px; color:#5b5b61; cursor:pointer;" style-hover="color:#3a3a40">Cancel</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notRejecting }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div onClick="{{ approveSelected }}" style="padding:10px 20px; border-radius:999px; background:#343ced; color:#ffffff; font-size:13px; font-weight:600; cursor:pointer;" style-hover="background:#2a31d4">{{ sel.approveLabel }}</div>
+            <div style="padding:9px 15px; border-radius:9px; background:rgba(0,0,0,.05); border:1px solid rgba(0,0,0,.12); font-size:13px; font-weight:500; color:#3a3a40; cursor:pointer;" style-hover="background:rgba(0,0,0,.07)">Edit above, then approve</div>
+            <div onClick="{{ startReject }}" style="padding:9px 14px; border-radius:9px; font-size:13px; color:#57575d; cursor:pointer;" style-hover="color:#a13b25">Reject</div>
+            <div style="flex:1;"></div>
+            <span style="font-size:11.5px; color:#5f5f66; font-family:'DM Sans',sans-serif;">{{ sel.footNote }}</span>
+          </div>
+        </sc-if>
+      </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- STATE 1 — YOUR CONTEXT (profile / first run) -->
+  <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; z-index:35; left:74px; right:0; top:0; bottom:0; background:#f6f3eb; display:flex; flex-direction:column; align-items:center;">
+
+      <div style="width:100%; max-width:1120px; padding:40px 44px 20px; flex:none;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:14px;">
+          <span style="font-size:10px; font-weight:600; letter-spacing:.16em; color:#343ced; white-space:nowrap;">{{ contextEyebrow }}</span>
+        </div>
+        <h1 style="margin:0 0 9px; font-size:31px; font-weight:600; letter-spacing:-.025em; line-height:1.2;">{{ contextTitle }}</h1>
+        <p style="margin:0; max-width:640px; font-size:13px; line-height:1.55; color:#57575d; text-wrap:pretty;">{{ contextSub }}</p>
+      </div>
+
+      <div style="flex:1; width:100%; overflow-y:auto; overflow-x:hidden; display:flex; justify-content:center;">
+        <div style="width:100%; max-width:1120px; padding:8px 44px 34px; display:grid; grid-template-columns:minmax(240px,310px) minmax(0,1fr); gap:20px; align-items:start;">
+
+          <div data-tour="profile" style="background:#ffffff; border-radius:20px; padding:24px 24px 22px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05); position:sticky; top:0;">
+            <div style="display:flex; align-items:center; gap:13px;">
+              <div style="width:46px; height:46px; flex:none; border-radius:50%; background:#343ced; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; color:#fff;">A</div>
+              <div style="min-width:0;">
+                <div style="font-size:17px; font-weight:600; letter-spacing:-.01em;">Akhilesh Goyal</div>
+                <div contenteditable="true" suppressContentEditableWarning="{{ true }}" style="font-size:12.5px; line-height:1.4; color:#343ced; cursor:text; text-wrap:pretty;" style-focus="color:#2a31d4">IT &amp; Ops — Service Desk Lead, Infrastructure Ops</div>
+              </div>
+            </div>
+
+            <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(0,0,0,.07);">
+              <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90;">HOW I READ YOUR WORK</span>
+              <div contenteditable="true" suppressContentEditableWarning="{{ true }}" style="margin-top:9px; font-size:13px; line-height:1.6; color:#3a3a40; cursor:text; text-wrap:pretty;" style-focus="color:#1c1c20">You run the IT-2 service desk queue and own access, VPN and endpoint escalations. You close most tickets from precedent, and you'd rather approve a good draft than write one from scratch.</div>
+            </div>
+
+            <div style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(0,0,0,.07); display:flex; flex-direction:column; gap:7px;">
+              <div style="display:grid; grid-template-columns:64px minmax(0,1fr); gap:10px;">
+                <span style="font-size:10.5px; color:#8a8a90;">Identity</span>
+                <span style="font-size:11px; line-height:1.45; color:#57575d;">Workday · "IT Operations Lead", team IT-Ops</span>
+              </div>
+              <div style="display:grid; grid-template-columns:64px minmax(0,1fr); gap:10px;">
+                <span style="font-size:10.5px; color:#8a8a90;">Evidence</span>
+                <span style="font-size:11px; line-height:1.45; color:#57575d;">214 tickets closed Jun–Sep · 11 runbooks you own</span>
+              </div>
+              <div style="display:grid; grid-template-columns:64px minmax(0,1fr); gap:10px;">
+                <span style="font-size:10.5px; color:#8a8a90;">Synced</span>
+                <span style="font-size:11px; line-height:1.45; color:#57575d;">Today 07:40 · 9 tools connected</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#ffffff; border-radius:20px; box-shadow:0 1px 2px rgba(0,0,0,.035), 0 10px 28px rgba(20,22,40,.05); overflow:hidden;">
+        <div data-tour="ctx-goals" style="padding:22px 26px 24px; border-top:1px solid rgba(0,0,0,.07);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:16px;">
+            <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">GOALS I WORK TOWARD WITH YOU</span>
+            <span style="font-size:11px; color:#8a8a90; flex:1 1 auto; min-width:0; text-align:right; line-height:1.4; text-wrap:pretty;">Where each one comes from · editable</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px 26px;">
+            <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
+              <div>
+                <span style="display:inline-block; padding:3px 8px; border-radius:6px; background:{{ g.scopeBg }}; color:{{ g.scopeFg }}; font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">{{ g.scope }}</span>
+                <div contenteditable="true" suppressContentEditableWarning="{{ true }}" style="font-size:13px; font-weight:500; line-height:1.45; color:#1c1c20; cursor:text; text-wrap:pretty;" style-focus="color:#343ced">{{ g.title }}</div>
+                <div style="display:flex; align-items:center; gap:9px; margin:9px 0 7px;">
+                  <div style="flex:1; height:3px; border-radius:2px; background:rgba(0,0,0,.07); overflow:hidden;">
+                    <div style="width:{{ g.pct }}; height:3px; border-radius:2px; background:{{ g.barColor }};"></div>
+                  </div>
+                  <span style="font-size:10.5px; color:#6b6b72; white-space:nowrap;">{{ g.metric }}</span>
+                </div>
+                <div style="font-size:11.5px; line-height:1.5; color:#57575d; text-wrap:pretty;">{{ g.mine }}</div>
+                <div style="margin-top:6px; font-size:10px; line-height:1.5; color:#8a8a90; text-wrap:pretty;">{{ g.src }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div data-tour="ctx-world" style="padding:22px 26px 24px; border-top:1px solid rgba(0,0,0,.07);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:16px;">
+            <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">YOUR WORLD</span>
+            <span style="font-size:11px; color:#8a8a90; flex:1 1 auto; min-width:0; text-align:right; line-height:1.4; text-wrap:pretty;">Projects · systems · rhythms</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:22px 26px;">
+            <sc-for list="{{ seeCards }}" as="s" hint-placeholder-count="3">
+              <div>
+                <div style="font-size:12px; font-weight:600; color:#1c1c20; margin-bottom:11px;">{{ s.title }}</div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  <sc-for list="{{ s.items }}" as="i" hint-placeholder-count="3">
+                    <div>
+                      <div style="font-size:12px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ i.text }}</div>
+                      <div style="margin-top:3px; font-size:10px; color:#8a8a90;">{{ i.src }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding:22px 26px 24px; border-top:1px solid rgba(0,0,0,.07);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:16px;">
+            <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">TASKS YOU DO AGAIN AND AGAIN</span>
+            <span style="font-size:11px; color:#8a8a90; flex:1 1 auto; min-width:0; text-align:right; line-height:1.4; text-wrap:pretty;">Tap one to see what I learned</span>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <sc-for list="{{ taskChips }}" as="tc" hint-placeholder-count="6">
+              <div onClick="{{ tc.onClick }}" style="padding:7px 13px; border-radius:9px; background:{{ tc.bg }}; border:1px solid {{ tc.border }}; font-size:12.5px; color:{{ tc.fg }}; cursor:pointer; white-space:nowrap; flex:none;" style-hover="border-color:rgba(52,60,237,.4)">{{ tc.label }}</div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ taskOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px; border-left:2px solid #343ced; padding:2px 0 2px 16px; animation:coFade .18s ease both;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:13px;">
+                <div style="font-size:13px; line-height:1.55; font-weight:500; color:#1c1c20; text-wrap:pretty;">{{ task.headline }}</div>
+                <div onClick="{{ closeTask }}" style="flex:none; font-size:12px; color:#6b6b72; cursor:pointer; padding:0 2px;" style-hover="color:#1c1c20">✕</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ task.evidence }}" as="ev" hint-placeholder-count="3">
+                  <div style="display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px;">
+                    <span style="font-size:11px; color:#6b6b72;">{{ ev.k }}</span>
+                    <span style="font-size:12px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ ev.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px; margin-top:8px;">
+                <span style="font-size:11px; color:#6b6b72;">So I plan to</span>
+                <span style="font-size:12px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ task.plan }}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px; margin-top:8px; align-items:center;">
+                <span style="font-size:11px; color:#6b6b72;">Confidence</span>
+                <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+                  <div style="display:flex; gap:3px;">
+                    <span style="width:18px; height:4px; border-radius:2px; background:{{ task.s1 }};"></span>
+                    <span style="width:18px; height:4px; border-radius:2px; background:{{ task.s2 }};"></span>
+                    <span style="width:18px; height:4px; border-radius:2px; background:{{ task.s3 }};"></span>
+                  </div>
+                  <span style="font-size:12px; color:#3a3a40;">{{ task.conf }} — {{ task.confNote }}</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; margin-top:14px;">
+                <div onClick="{{ closeTask }}" style="padding:7px 13px; border-radius:999px; background:#343ced; color:#fff; font-size:12px; font-weight:500; cursor:pointer;" style-hover="background:#2a31d4">That's right</div>
+                <div onClick="{{ closeTask }}" style="padding:7px 13px; border-radius:999px; border:1px solid rgba(0,0,0,.12); font-size:12px; color:#3a3a40; cursor:pointer;" style-hover="background:rgba(0,0,0,.04)">Not quite</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="padding:22px 26px 24px; border-top:1px solid rgba(0,0,0,.07);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:16px;">
+            <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">PEOPLE I WOULD WORK THROUGH</span>
+            <span style="font-size:11px; color:#8a8a90; flex:1 1 auto; min-width:0; text-align:right; line-height:1.4; text-wrap:pretty;">Tap to change how I involve them</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:2px 26px;">
+            <sc-for list="{{ colleagues }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.onClick }}" style="display:flex; align-items:center; gap:11px; padding:8px 0; cursor:pointer;" style-hover="background:rgba(0,0,0,.015)">
+                <div style="width:27px; height:27px; flex:none; border-radius:50%; background:{{ c.avBg }}; color:{{ c.avFg }}; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:600;">{{ c.initials }}</div>
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size:12.5px; font-weight:500; color:#1c1c20;">{{ c.name }}</div>
+                  <div style="font-size:10.5px; color:#6b6b72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.role }}</div>
+                </div>
+                <span style="flex:none; padding:3px 9px; border-radius:6px; background:{{ c.intentBg }}; color:{{ c.intentFg }}; font-size:10px; font-weight:500;">{{ c.intent }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ personOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px; border-left:2px solid #343ced; padding:2px 0 2px 16px; animation:coFade .18s ease both;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:12px;">
+                <div style="font-size:13px; line-height:1.55; font-weight:500; color:#1c1c20; text-wrap:pretty;">{{ person.headline }}</div>
+                <div onClick="{{ closePerson }}" style="flex:none; font-size:12px; color:#6b6b72; cursor:pointer; padding:0 2px;" style-hover="color:#1c1c20">✕</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ person.rows }}" as="pr" hint-placeholder-count="3">
+                  <div style="display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px;">
+                    <span style="font-size:11px; color:#6b6b72;">{{ pr.k }}</span>
+                    <span style="font-size:12px; line-height:1.5; color:#3a3a40; text-wrap:pretty;">{{ pr.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:13px;">
+                <sc-for list="{{ person.modes }}" as="pm" hint-placeholder-count="4">
+                  <div onClick="{{ pm.onClick }}" style="padding:6px 11px; border-radius:999px; background:{{ pm.bg }}; border:1px solid {{ pm.border }}; color:{{ pm.fg }}; font-size:11.5px; cursor:pointer;" style-hover="border-color:rgba(52,60,237,.4)">{{ pm.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div data-tour="ctx-tools" style="padding:22px 26px 24px; border-top:1px solid rgba(0,0,0,.07);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:16px;">
+            <span style="font-size:10.5px; font-weight:600; letter-spacing:.13em; color:#8a8a90; white-space:nowrap;">TOOLS I CAN REACH</span>
+            <span style="font-size:11px; color:#8a8a90; flex:1 1 auto; min-width:0; text-align:right; line-height:1.4; text-wrap:pretty;">R read · W write · scopes from your IT policy</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); gap:0 26px;">
+            <sc-for list="{{ tools }}" as="t" hint-placeholder-count="9">
+              <div style="display:flex; align-items:center; gap:10px; padding:8px 0;">
+                <div style="width:24px; height:24px; flex:none; border-radius:7px; background:{{ t.bg }}; color:{{ t.fg }}; display:flex; align-items:center; justify-content:center; font-size:{{ t.size }}; font-weight:700; letter-spacing:-.02em;">{{ t.k }}</div>
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size:12.5px; font-weight:500; color:#1c1c20; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.name }}</div>
+                  <div style="font-size:10.5px; color:#6b6b72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.detail }}</div>
+                </div>
+                <div style="display:flex; gap:4px; flex:none;">
+                  <span style="width:20px; height:18px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:600; background:{{ t.rBg }}; color:{{ t.rFg }};">R</span>
+                  <span style="width:20px; height:18px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:600; background:{{ t.wBg }}; color:{{ t.wFg }};">W</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="width:100%; flex:none; border-top:1px solid rgba(0,0,0,.07); background:rgba(246,243,235,.94); display:flex; justify-content:center;">
+        <div data-tour="ctx-cta" style="width:100%; max-width:1120px; padding:15px 44px; display:flex; align-items:center; gap:12px;">
+          <div onClick="{{ finishOnboarding }}" style="padding:11px 20px; border-radius:999px; background:#343ced; color:#fff; font-size:13.5px; font-weight:500; cursor:pointer;" style-hover="background:#2a31d4">{{ contextCta }}</div>
+          <sc-if value="{{ firstRun }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ finishOnboarding }}" style="padding:10px 14px; border-radius:999px; font-size:13px; color:#57575d; cursor:pointer;" style-hover="color:#1c1c20">I'll correct it as we go</div>
+          </sc-if>
+          <div style="flex:1;"></div>
+          <span style="font-size:11.5px; color:#57575d;">I'll ask before anything irreversible.</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  
+
+  <!-- TOUR SPOTLIGHT -->
+  <sc-if value="{{ hasSpot }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; inset:0; z-index:60; pointer-events:none;">
+      <div style="position:absolute; top:{{ spot.top }}px; left:{{ spot.left }}px; width:{{ spot.w }}px; height:{{ spot.h }}px; border:2px solid #343ced; border-radius:14px; box-shadow:0 0 0 9999px rgba(24,24,32,.42); transition:top .18s ease, left .18s ease, width .18s ease, height .18s ease;"></div>
+      <div style="position:absolute; top:{{ spot.tipTop }}px; left:{{ spot.tipLeft }}px; width:288px; pointer-events:auto; background:#ffffff; border-radius:14px; padding:16px 17px 15px; box-shadow:0 18px 44px rgba(20,22,40,.24); animation:coFade .18s ease both;">
+        
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:.14em; color:#343ced; white-space:nowrap;">STEP {{ tourPos }}</span>
+          <div style="flex:1;"></div>
+          <div onClick="{{ tourStop }}" style="font-size:12px; color:#8a8a90; cursor:pointer;" style-hover="color:#1c1c20">✕</div>
+        </div><div style="font-size:14.5px; font-weight:600; line-height:1.35; color:#1c1c20; text-wrap:pretty;">{{ tourTitle }}</div>
+        <div style="margin-top:6px; font-size:12px; line-height:1.55; color:#57575d; text-wrap:pretty;">{{ tourBody }}</div>
+        <sc-if value="{{ hasCta }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:10px; display:flex; align-items:center; gap:7px; padding:7px 10px; border-radius:9px; background:rgba(52,60,237,.08);">
+            <span style="width:6px; height:6px; border-radius:50%; background:#343ced; animation:coPulse 1.6s ease-in-out infinite; flex:none;"></span>
+            <span style="font-size:11.5px; font-weight:600; color:#343ced; text-wrap:pretty;">{{ tourCta }}</span>
+          </div>
+        </sc-if>
+        <div style="margin-top:13px; display:flex; align-items:center; gap:8px;">
+          <div onClick="{{ tourPrev }}" style="padding:7px 12px; border-radius:8px; border:1px solid rgba(0,0,0,.12); font-size:11.5px; font-weight:500; color:#4a4a51; cursor:pointer;" style-hover="background:rgba(0,0,0,.04)">Back</div>
+          <sc-if value="{{ notTourEnd }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ tourNext }}" style="flex:1; padding:7px 12px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; text-align:center; cursor:pointer;" style-hover="background:#2a31d4">Next</div>
+          </sc-if>
+          <sc-if value="{{ atTourEnd }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ tourStop }}" style="flex:1; padding:7px 12px; border-radius:8px; background:#343ced; color:#ffffff; font-size:11.5px; font-weight:600; text-align:center; cursor:pointer;" style-hover="background:#2a31d4">Done — explore freely</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;initialState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;onboarding&quot;,&quot;panel&quot;,&quot;decision&quot;],&quot;default&quot;:&quot;onboarding&quot;,&quot;tsType&quot;:&quot;'home' | 'onboarding' | 'panel' | 'decision'&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;confidenceStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;bars&quot;,&quot;percent&quot;,&quot;label&quot;],&quot;default&quot;:&quot;bars&quot;,&quot;tsType&quot;:&quot;'bars' | 'percent' | 'label'&quot;,&quot;section&quot;:&quot;Agent&quot;},&quot;autoRunSafe&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Agent&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const init = props.initialState || 'onboarding';
+    this.frameRef = React.createRef();
+    this.state = {
+      view: 'home',
+      tab: 'day',
+      selected: 'a1',
+      rejecting: false,
+      task: null,
+      person: null,
+      seenContext: init === 'panel' || init === 'decision',
+      ftype: 'all',
+      fstate: 'all',
+      openTask: null,
+      paused: false,
+      order: this.dayTaskSeed().map(t => t.id),
+      tourOn: true,
+      tstep: 0,
+      spot: null,
+      intents: {},
+      actions: this.seed()
+    };
+  }
+
+  seed() {
+    return [
+      {
+        id: 'a1', mode: 'ask', status: 'approval', reversible: true, level: 3,
+        confLabel: 'High', pct: 94, time: '8:41am',
+        title: 'Drafted reply to VPN-access ticket #3391',
+        why: 'Matches 13 of 14 VPN cert-expiry tickets you closed the same way in the last 90 days.',
+        source: 'Jira Service Desk · IT-3391',
+        decided: 'I wrote a reply for Marta Ruiz telling her the device certificate on her laptop expired on Sep 8, with the re-issue steps from your runbook, and set the ticket to Pending Requester. I have not sent it.',
+        reasons: [
+          { text: 'Okta shows her VPN device cert expired 2 days ago — the denial reason in the log matches exactly.' },
+          { text: 'Runbook VPN-CERT-04 is the documented fix, and it resolved 13 of the last 14 tickets with this signature.' },
+          { text: 'She is travelling (Madrid, out-of-office block Thu-Fri), so a self-serve reply unblocks her faster than a callback.' }
+        ],
+        draftLabel: 'DRAFT REPLY — TICKET IT-3391',
+        draft: 'Hi Marta — your VPN connection is being refused because the device certificate on MRUIZ-MBP16 expired on Sep 8.\n\nTo re-issue it: open Company Portal → Devices → MRUIZ-MBP16 → "Renew certificate", then reconnect to GlobalProtect. It takes about two minutes and no admin approval is needed.\n\nIf it still refuses after renewing, reply here and I\'ll escalate to network ops.\n\n— IT Service Desk',
+        context: [
+          { k: 'Ticket', v: 'IT-3391 · "VPN access denied on both office and home network" — opened 7:52am by Marta Ruiz' },
+          { k: 'Runbook', v: 'VPN-CERT-04 § "Re-issue for expired device certificates" (Confluence, owned by you, updated Aug 2026)' },
+          { k: 'Precedent', v: '14 tickets with the same GlobalProtect error code in 90 days; 13 closed by cert re-issue, median time-to-close 41 min' },
+          { k: 'Person', v: 'Marta Ruiz · Field Sales, Madrid · reports to Dan Okafor · no prior IT escalations' }
+        ],
+        confNote: 'The error code, the Okta expiry date and the runbook all agree. The only unknown is whether she has Company Portal installed — the reply covers that with a fallback.',
+        blastScope: 'One requester',
+        blast: 'A reply on one ticket, visible to Marta and the IT-2 queue. Sent replies stay editable for 10 minutes and the ticket status can be rolled back.',
+        routeLabel: 'Held for you because',
+        route: 'it writes to a requester under your name. Approve once and I\'ll send this class of cert-expiry reply automatically.',
+        people: [
+          { initials: 'MR', name: 'Marta Ruiz', role: 'Requester · Field Sales', bg: '#343ced' },
+          { initials: 'DO', name: 'Dan Okafor', role: 'CC if unresolved by 5pm', bg: '#266749' }
+        ],
+        approveLabel: 'Approve and send',
+        footNote: 'reversible · 10 min edit window'
+      },
+      {
+        id: 'a2', mode: 'auto', status: 'done', reversible: true, level: 3,
+        confLabel: 'High', pct: 97, time: '8:12am',
+        title: 'Attached diagnostic logs to incident #4821',
+        why: 'Runbook INC-DB-02 requires query and connection-pool logs within 15 minutes of a Sev-2 opening.',
+        source: 'PagerDuty · Datadog · INC-4821',
+        resolution: 'Done automatically',
+        decided: 'I pulled the last 30 minutes of query and connection-pool logs from Datadog and attached them to incident #4821, with a one-line index of what each file covers.',
+        reasons: [
+          { text: 'INC-DB-02 lists log capture as step 1 and the window closes 15 minutes after the incident opens.' },
+          { text: 'Attaching a file adds context without changing incident state, severity or ownership.' },
+          { text: 'You have done this manually on the last 9 Sev-2s in this service.' }
+        ],
+        context: [
+          { k: 'Incident', v: 'INC-4821 · Sev-2 · "orders-db p95 latency above threshold" — opened 8:04am' },
+          { k: 'Runbook', v: 'INC-DB-02 § "Evidence capture before escalation"' },
+          { k: 'Source', v: 'Datadog log query orders-db.pool.* 07:34–08:04, 3 files, 4.2 MB' }
+        ],
+        confNote: 'Deterministic step from an owned runbook with a fixed log query. Nothing was interpreted.',
+        blastScope: 'One incident record',
+        blast: 'Adds three attachments to an existing incident. Removable in one click, and no notification was sent.',
+        routeLabel: 'Ran automatically because',
+        route: 'it is additive, scoped to one record and fully reversible — inside the automatic band you approved.',
+        people: [{ initials: 'SL', name: 'Sana Lund', role: 'Incident commander · notified', bg: '#7f5610' }],
+        approveLabel: 'Keep',
+        footNote: 'undo removes all 3 attachments'
+      },
+      {
+        id: 'a3', mode: 'ask', status: 'approval', reversible: false, level: 2,
+        confLabel: 'Medium', pct: 71, time: '8:38am',
+        title: 'Escalate DB latency alert to on-call lead',
+        why: 'orders-db p95 has been at 480ms for 22 minutes, past the 300ms escalation threshold in the runbook.',
+        source: 'Datadog monitor · runbook DB-LAT-01',
+        decided: 'I would page Ravi Anand, the database on-call lead, and raise INC-4821 from Sev-2 to Sev-1 with a summary of the latency trend and the two deploys in the window.',
+        reasons: [
+          { text: 'p95 has held at 480ms for 22 min; DB-LAT-01 escalates after 15 min above 300ms.' },
+          { text: 'Two deploys landed in the window (orders-api 4.19.2, pricing-svc 2.7.0) — either could be the cause, which needs a human call.' },
+          { text: 'Read-replica lag is climbing, so the pattern is trending worse rather than recovering.' }
+        ],
+        context: [
+          { k: 'Monitor', v: 'Datadog "orders-db p95 latency" — 480ms current, 300ms threshold, 22 min in breach' },
+          { k: 'Runbook', v: 'DB-LAT-01 § "Escalate to DB on-call after 15 min sustained breach"' },
+          { k: 'Deploys', v: 'orders-api 4.19.2 (7:58am), pricing-svc 2.7.0 (8:06am) — both inside the breach window' },
+          { k: 'Rota', v: 'Ravi Anand on call until 6pm; Sana Lund is incident commander on INC-4821' }
+        ],
+        confNote: 'Medium — the breach is unambiguous but the cause is not. Traffic is also 18% above the weekly baseline, which can produce this profile without a regression.',
+        blastScope: 'Pages a person · starts a Sev-1 clock',
+        blast: 'A page cannot be un-sent and a Sev-1 declaration starts customer-comms obligations. I cannot undo either.',
+        routeLabel: 'Held for you because',
+        route: 'it is irreversible and wakes a named person. I never page anyone without approval, at any confidence.',
+        people: [
+          { initials: 'RA', name: 'Ravi Anand', role: 'DB on-call lead · would be paged', bg: '#a13b25' },
+          { initials: 'SL', name: 'Sana Lund', role: 'Incident commander · would be notified', bg: '#7f5610' },
+          { initials: 'JK', name: 'Jen Kwon', role: 'Comms lead · notified at Sev-1', bg: '#343ced' }
+        ],
+        approveLabel: 'Approve escalation',
+        footNote: 'irreversible · no undo after send'
+      },
+      {
+        id: 'a4', mode: 'ask', status: 'approval', reversible: true, level: 3,
+        confLabel: 'High', pct: 91, time: '8:22am',
+        title: 'Filed access request for new-hire onboarding',
+        why: 'Three hires start Monday and are missing their Okta groups and Zoom licenses against the IT-Ops baseline.',
+        source: 'Workday · Okta · access baseline v6',
+        decided: 'I prepared one access request covering three new hires: Okta groups it-ops-readonly and vpn-standard, plus Zoom Pro licenses. It is drafted, not submitted.',
+        reasons: [
+          { text: 'Workday shows three IT & Ops hires with a Monday Sep 14 start date.' },
+          { text: 'Baseline v6 grants exactly these three entitlements to this role, and none of the three has them yet.' },
+          { text: 'Provisioning takes 2 business days, so today is the last day to file without a day-one gap.' }
+        ],
+        context: [
+          { k: 'Hires', v: 'A. Boateng, L. Ferrer, T. Nakamura · IT & Ops · start Mon Sep 14' },
+          { k: 'Baseline', v: 'Access baseline v6 — it-ops-readonly, vpn-standard, Zoom Pro (no privileged scopes)' },
+          { k: 'Gap check', v: 'Okta shows 0 of 3 provisioned; SLA is 2 business days' },
+          { k: 'Approver', v: 'Dana Whitfield (IT Ops manager) — approves this request type in ~4h on average' }
+        ],
+        confNote: 'High — the roster and the baseline agree. Only read-level scopes are involved; nothing privileged is requested.',
+        blastScope: 'One request · 3 people',
+        blast: 'A request, not a grant. Withdrawable before Dana approves it, and revocable in Okta afterwards.',
+        routeLabel: 'Held for you because',
+        route: 'it names real people to an approver. The filing itself is reversible, so this is a one-tap approval.',
+        people: [
+          { initials: 'DW', name: 'Dana Whitfield', role: 'Approver · IT Ops manager', bg: '#266749' },
+          { initials: '+3', name: '3 new hires', role: 'Subjects of the request', bg: '#343ced' }
+        ],
+        approveLabel: 'Approve and file',
+        footNote: 'reversible · withdrawable before approval'
+      },
+      {
+        id: 'a5', mode: 'auto', status: 'done', reversible: true, level: 3,
+        confLabel: 'High', pct: 96, time: '8:06am',
+        title: 'Merged 6 duplicate password-reset tickets into #3384',
+        why: 'All six came from the same Okta outage window and describe the same failure.',
+        source: 'Jira Service Desk · Okta system log',
+        resolution: 'Done automatically',
+        decided: 'I merged six tickets into IT-3384 and left each requester a note pointing at the parent ticket.',
+        reasons: [
+          { text: 'All six were opened between 7:31 and 7:44am, inside the Okta factor-sync degradation.' },
+          { text: 'Merging keeps one thread and stops six people getting six different answers.' }
+        ],
+        context: [
+          { k: 'Tickets', v: 'IT-3385, 3386, 3387, 3388, 3390, 3392 → parent IT-3384' },
+          { k: 'Signal', v: 'Okta system log: factor-sync degradation 7:28–7:49am' }
+        ],
+        confNote: 'High — identical error text and one shared time window.',
+        blastScope: '6 tickets · 6 requesters',
+        blast: 'Merges are unwound in one click and the notes are retracted with them.',
+        routeLabel: 'Ran automatically because',
+        route: 'queue hygiene inside your own queue is reversible and low blast-radius.',
+        people: [{ initials: '+6', name: '6 requesters', role: 'Notified on the parent ticket', bg: '#343ced' }],
+        approveLabel: 'Keep',
+        footNote: 'undo restores all 6 tickets'
+      },
+      {
+        id: 'a6', mode: 'auto', status: 'active', reversible: true, level: 2,
+        confLabel: 'Medium', pct: 68, time: 'started 8:30am',
+        title: 'Reconciling laptop inventory against the Q3 asset audit',
+        why: 'Jamf reports 412 enrolled devices; the audit sheet lists 397. I am pairing the 15 unmatched serials.',
+        source: 'Jamf · Q3 asset audit sheet',
+        resolution: 'Working — 9 of 15 matched',
+        decided: 'I am matching unaccounted-for serials between Jamf and the audit sheet, and will hand you only the ones I cannot resolve.',
+        reasons: [
+          { text: 'The audit closes Friday and the 15-device gap has to be explained before sign-off.' },
+          { text: 'Reading both systems and writing to a scratch column changes nothing anyone else depends on.' }
+        ],
+        context: [
+          { k: 'Systems', v: 'Jamf Pro (412 enrolled) · "Q3 Asset Audit" sheet (397 rows)' },
+          { k: 'Output', v: 'Scratch column "coworker-match" — nothing overwritten' }
+        ],
+        confNote: 'Medium — six serials have no clean match and may be loaners. Those come to you rather than getting a guess.',
+        blastScope: 'One spreadsheet column',
+        blast: 'Writes to a scratch column only. Clearing the column reverses everything.',
+        routeLabel: 'Ran automatically because',
+        route: 'nothing is overwritten and no one is notified.',
+        people: [{ initials: 'FT', name: 'Femi Tade', role: 'Asset audit owner · gets the summary', bg: '#7f5610' }],
+        approveLabel: 'Keep going',
+        footNote: 'reversible · scratch column only'
+      },
+      {
+        id: 'a7', mode: 'auto', status: 'active', reversible: true, level: 3,
+        confLabel: 'High', pct: 88, time: 'started 8:35am',
+        title: 'Watching the change-freeze calendar for conflicting deploys',
+        why: 'Freeze starts Friday 18:00 UTC and two teams still have deploys scheduled inside it.',
+        source: 'Google Calendar · release board',
+        resolution: 'Working — 2 conflicts flagged',
+        decided: 'I am flagging deploys scheduled inside the freeze window and will draft the nudge to each owner for you to approve.',
+        reasons: [
+          { text: 'Priya announced the freeze two days ago; the release board was not updated.' },
+          { text: 'Flagging is a read plus a comment on your own board — reversible.' }
+        ],
+        context: [
+          { k: 'Window', v: 'Fri Sep 12 18:00 UTC → Mon Sep 15 06:00 UTC' },
+          { k: 'Conflicts', v: 'pricing-svc 2.8.0 (Sat), search-idx migration (Sun)' }
+        ],
+        confNote: 'High on the conflict, no opinion on whether either deploy deserves an exception — that is yours.',
+        blastScope: 'Your release board',
+        blast: 'Comments on two board items. Deletable.',
+        routeLabel: 'Ran automatically because',
+        route: 'it only annotates a board you own.',
+        people: [{ initials: 'PR', name: 'Priya Raman', role: 'Freeze owner · CC on the nudge', bg: '#266749' }],
+        approveLabel: 'Keep going',
+        footNote: 'reversible · comments only'
+      },
+      {
+        id: 'a8', mode: 'auto', status: 'done', reversible: true, level: 3,
+        confLabel: 'High', pct: 93, time: '7:58am',
+        title: 'Posted the maintenance-window notice to #it-announcements',
+        why: 'Approved CHG-2214 requires a 24-hour notice, and the window opens tomorrow 22:00 UTC.',
+        source: 'ServiceNow CHG-2214 · Slack',
+        resolution: 'Done automatically',
+        decided: 'I posted the standard maintenance notice for CHG-2214 to #it-announcements using the approved template.',
+        reasons: [
+          { text: 'The change is already approved — the notice is a required step, not a decision.' },
+          { text: 'Template copy is fixed; I filled in the window and the affected services.' }
+        ],
+        context: [
+          { k: 'Change', v: 'CHG-2214 · orders-db failover test · Thu 22:00–23:30 UTC · approved Sep 8' },
+          { k: 'Template', v: '"Planned maintenance" notice v3, owned by IT Comms' }
+        ],
+        confNote: 'High — templated text with fields taken straight from the approved change record.',
+        blastScope: '1 Slack channel · 240 members',
+        blast: 'A Slack post I can delete, though people may have already read it.',
+        routeLabel: 'Ran automatically because',
+        route: 'the change was approved and the notice is a required, templated follow-through.',
+        people: [{ initials: 'JK', name: 'Jen Kwon', role: 'IT Comms · template owner', bg: '#343ced' }],
+        approveLabel: 'Keep',
+        footNote: 'undo deletes the Slack post'
+      },
+      {
+        id: 'a9', mode: 'ask', status: 'rejected', reversible: true, level: 1,
+        confLabel: 'Low', pct: 44, time: 'yesterday 4:12pm',
+        title: 'Close stale ticket #3208 as resolved',
+        why: 'No requester reply for 11 days after the fix was posted.',
+        source: 'Jira Service Desk · IT-3208',
+        resolution: 'Rejected by you — "Needs a human"',
+        decided: 'I proposed closing IT-3208 as resolved after 11 days of silence.',
+        reasons: [{ text: 'Auto-close policy allows closure after 10 days of no reply.' }],
+        context: [
+          { k: 'Ticket', v: 'IT-3208 · printer fleet auth failures · last reply Aug 30' },
+          { k: 'Your reason', v: 'Needs a human — you noted the requester is on medical leave' }
+        ],
+        confNote: 'Low, and you were right. I have stopped proposing closure on tickets whose requester has an active leave record.',
+        blastScope: 'One ticket',
+        blast: 'Closure is reopenable, but it sends a "resolved" email that cannot be recalled.',
+        routeLabel: 'Learned from this',
+        route: 'leave status is now part of the stale-ticket check.',
+        people: [{ initials: 'HB', name: 'Hana Beck', role: 'Requester · on leave', bg: '#5b5b61' }],
+        approveLabel: 'Approve',
+        footNote: 'closed · learning applied'
+      }
+    ];
+  }
+
+  // helpers
+  eff(a) {
+    const autoRun = this.props.autoRunSafe !== false;
+    if (!autoRun && a.mode === 'auto' && a.status === 'active') return 'approval';
+    return a.status;
+  }
+
+  vm(a) {
+    const st = this.eff(a);
+    const seg = (on, lv) => (on ? (lv === 1 ? '#a13b25' : lv === 2 ? '#7f5610' : '#343ced') : '#d9d9df');
+    const revLabel = a.reversible ? 'Reversible' : 'Irreversible';
+    const isApproval = st === 'approval';
+    return Object.assign({}, a, {
+      status: st,
+      needsApproval: isApproval,
+      isDone: st === 'done',
+      isRunning: st === 'active',
+      isClosed: st === 'rejected' || st === 'reverted',
+      modeLabel: isApproval ? 'Needs you' : st === 'active' ? 'Automatic' : st === 'done' ? 'Automatic' : 'Closed',
+      modeBg: isApproval ? 'rgba(154,106,18,.12)' : st === 'rejected' || st === 'reverted' ? 'rgba(0,0,0,.05)' : 'rgba(216,253,73,.45)',
+      modeFg: isApproval ? '#7f5610' : st === 'rejected' || st === 'reverted' ? '#5b5b61' : '#3c4a06',
+      revLabel: revLabel,
+      revBg: a.reversible ? 'rgba(47,125,91,.12)' : 'rgba(184,69,46,.1)',
+      revFg: a.reversible ? '#266749' : '#a13b25',
+      resFg: st === 'rejected' ? '#a13b25' : '#5b5b61',
+      confShort: this.props.confidenceStyle === 'percent' ? a.pct + '%' : a.confLabel,
+      confLong: a.confLabel + ' · ' + a.pct + '%',
+      s1: seg(a.level >= 1, a.level),
+      s2: seg(a.level >= 2, a.level),
+      s3: seg(a.level >= 3, a.level),
+      cardBg: '#ffffff',
+      cardBorder: isApproval ? 'rgba(52,60,237,.3)' : 'rgba(0,0,0,.05)',
+      titleColor: st === 'rejected' || st === 'reverted' ? '#6a6a70' : '#1c1c20',
+      sourceGap: st === 'approval' || st === 'done' || st === 'active' || st === 'rejected' ? '12px' : '0px',
+      hasDraft: !!a.draft,
+      resolution: a.resolution || (isApproval ? 'Waiting on you' : ''),
+      onOpen: () => this.setState({ view: 'detail', selected: a.id, rejecting: false }),
+      onApprove: (e) => { if (e) e.stopPropagation(); this.resolve(a.id, 'done', 'Approved by you'); },
+      onReject: (e) => { if (e) e.stopPropagation(); this.setState({ view: 'detail', selected: a.id, rejecting: true }); },
+      onUndo: (e) => { if (e) e.stopPropagation(); this.resolve(a.id, 'reverted', 'Undone by you'); },
+      onHold: (e) => { if (e) e.stopPropagation(); this.resolve(a.id, 'approval', ''); }
+    });
+  }
+
+  resolve(id, status, resolution) {
+    this.setState(s => ({
+      rejecting: false,
+      actions: s.actions.map(a => a.id === id ? Object.assign({}, a, { status: status, resolution: resolution, time: status === 'done' ? 'just now' : a.time }) : a)
+    }));
+  }
+
+  tourSteps() {
+    return [
+      { t: 'rail', set: { view: 'home' }, title: 'Start here', body: 'Your proactive coworker sits in the rail. The badge means three things are waiting on you. Click it.', cta: 'Click the coworker' },
+      { t: 'profile', set: { view: 'onboarding' }, title: 'First run: what I know about you', body: 'Before it touches anything, the coworker shows its read on you — your role, how it interprets your work, and where every fact came from.' },
+      { t: 'ctx-goals', set: { view: 'onboarding' }, title: 'The goals it works toward', body: 'Company objectives, team OKRs and compliance controls — each tagged with its origin and what it is measured against.' },
+      { t: 'ctx-world', set: { view: 'onboarding' }, title: 'Your projects, systems and rhythms', body: 'What you are in the middle of, what you own, and what you do on a repeating cadence. This is how it knows what matters today.' },
+      { t: 'ctx-tools', set: { view: 'onboarding' }, title: 'What it can reach', body: 'Every connected tool with read and write scopes shown separately. Write is blocked wherever your IT policy blocks it.' },
+      { t: 'ctx-cta', set: { view: 'onboarding' }, title: 'Confirm and move on', body: 'Accept the read and the coworker opens straight to your day from now on. First run happens once.', cta: 'Click to continue' },
+      { t: 'band', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, title: 'Everything, already touched', body: 'The agent is continuously working 24/7. The gauge shows what it finished, what is running, what it drafted, and what only you can judge.' },
+      { t: 'your-calls', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, title: 'Your calls', body: 'Drafted and waiting on your word. The primary action sits on the card, and anything that cannot be undone says so in amber.' },
+      { t: 'agent-has', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, title: 'Already off your plate', body: 'Running or finished. Quiet by design — nothing here needs you, and every line is reversible.' },
+      { t: 'signals', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, title: 'Signals coming in', body: 'New Slack threads, emails, tickets and invites land here and turn into tasks — or are deliberately left alone.' },
+      { t: 'goals-card', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, title: 'Goals you can track', body: 'The same goals from your context, with live progress, so you can see whether the day is moving them.' },
+    ];
+  }
+
+  measureTour() {
+    if (!this.state.tourOn) { if (this.state.spot) this.setState({ spot: null }); return; }
+    const steps = this.tourSteps();
+    const st = steps[Math.min(this.state.tstep, steps.length - 1)];
+    const frame = this.frameRef && this.frameRef.current;
+    const el = frame && frame.querySelector('[data-tour="' + st.t + '"]');
+    if (!frame) { if (this.state.spot) this.setState({ spot: null }); return; }
+    if (!el) {
+      // the step's page is not mounted (the user navigated away) — put it back
+      const need = st.set || {};
+      const stale = Object.keys(need).some(k => this.state[k] !== need[k]);
+      if (stale) this.setState(Object.assign({}, need, { spot: null }));
+      else if (this.state.spot) this.setState({ spot: null });
+      return;
+    }
+    let sc = el.parentElement;
+    while (sc && sc !== frame) {
+      const oy = getComputedStyle(sc).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 4) {
+        const rr = el.getBoundingClientRect(), c = sc.getBoundingClientRect();
+        const want = Math.max(0, sc.scrollTop + (rr.top - c.top) - 18);
+        if (Math.abs(want - sc.scrollTop) > 2) sc.scrollTop = want;
+        break;
+      }
+      sc = sc.parentElement;
+    }
+    let r0 = el.getBoundingClientRect();
+    const vh = window.innerHeight || 900;
+    if (r0.top < 8) window.scrollBy(0, r0.top - 8);
+    else if (r0.bottom > vh - 8) window.scrollBy(0, Math.min(r0.top - 8, r0.bottom - vh + 8));
+    const r = el.getBoundingClientRect(), f = frame.getBoundingClientRect();
+    const pad = 6;
+    const top = Math.max(4, r.top - f.top - pad), left = Math.max(4, r.left - f.left - pad);
+    const w = Math.min(r.width + pad * 2, f.width - left - 8);
+    const room = Math.max(120, Math.min(f.bottom, window.innerHeight || f.bottom) - (f.top + top) - 16);
+    let h = r.height + pad * 2;
+    if (h > room) {
+      // end the ring on a child boundary so it never cuts a card in half
+      let fit = 0;
+      for (const kid of el.children) {
+        const kb = kid.getBoundingClientRect().bottom - r.top + pad * 2;
+        if (kb > room) break;
+        fit = kb;
+      }
+      h = fit > 90 ? fit : room;
+    }
+    const tipW = 288, gap = 14;
+    const fh = Math.max(240, Math.min(f.height, (window.innerHeight || f.height) - f.top - 8));
+    let tipLeft = left + w + gap, tipTop = top;
+    if (tipLeft + tipW > f.width - 12) {
+      tipLeft = Math.max(12, Math.min(left, f.width - tipW - 12));
+      tipTop = top + h + gap;
+      if (tipTop + 250 > fh - 12) tipTop = Math.max(12, top - 250 - gap);
+    } else {
+      tipTop = Math.max(12, Math.min(top, fh - 260));
+    }
+    const next = { top: Math.round(top), left: Math.round(left), w: Math.round(w), h: Math.round(h), tipTop: Math.round(tipTop), tipLeft: Math.round(tipLeft) };
+    const cur = this.state.spot;
+    if (!cur || cur.top !== next.top || cur.left !== next.left || cur.w !== next.w || cur.h !== next.h || cur.tipTop !== next.tipTop || cur.tipLeft !== next.tipLeft) this.setState({ spot: next });
+  }
+
+  componentDidMount() { this.frameRef = this.frameRef || React.createRef(); setTimeout(() => this.measureTour(), 60); }
+  componentDidUpdate() {
+    if (!this.state.tourOn) return;
+    // the re-render resets inner scroll positions — re-apply and re-measure immediately
+    this.measureTour();
+    clearTimeout(this._mt1); clearTimeout(this._mt2);
+    this._mt1 = setTimeout(() => this.measureTour(), 60);
+    this._mt2 = setTimeout(() => this.measureTour(), 260);
+  }
+
+  goTour(i) {
+    const steps = this.tourSteps();
+    const n = Math.max(0, Math.min(steps.length - 1, i));
+    this.setState(Object.assign({}, steps[n].set, { tstep: n, tourOn: true, spot: null }));
+  }
+
+  dayTaskSeed() {
+    return [
+      { id: 't-vpn', type: 'ticket', when: '5h to SLA', whenTone: '#7f5610', state: 'confirm', owner: 'you', rev: true,
+        revNote: 'The reply can be withdrawn and the ticket reopened for 10 minutes after sending.',
+        title: 'IT-3391 · VPN access denied — reply drafted', conf: 'High', pct: 94,
+        why: 'Marta\u2019s device certificate expired on Sep 8. The runbook fix closed 13 of the last 14 tickets with this signature.',
+        source: 'Jira IT-3391 · Okta cert log · runbook VPN-CERT-04',
+        reasons: ['Okta shows cert MARTA-MBP-14 expired 08 Sep 02:11.', 'VPN-CERT-04 is the fix you applied to 13 of 14 look-alike tickets.', 'Nothing about her account is unusual, so no exception applies.'],
+        context: [{ k: 'Ticket', v: 'IT-3391 · opened 04:12 · SLA 14:00' }, { k: 'Draft', v: 'Reissue steps + self-serve link, signed as you' }],
+        primary: 'Approve and send', secondary: ['Edit draft', 'Reject'] },
+      { id: 't-onboard', type: 'meeting', when: '16:00 · file today', whenTone: '#7f5610', state: 'confirm', owner: 'you', rev: false,
+        revNote: 'Filing creates real Okta group grants. I will not file without your approval, and reversing it means a second ticket.',
+        title: 'New-hire access batch must be filed before the 16:00 sync', conf: 'High', pct: 91,
+        why: 'Three hires start Monday. Provisioning takes two days, so the request has to go today for them to have day-one access.',
+        source: 'Workday starts · Okta baseline v6 · calendar invite',
+        reasons: ['Workday lists 3 starts on Monday, all in Support Engineering.', 'Okta baseline v6 covers 9 of the 11 grants; 2 are team-specific and match Dana\u2019s last approval.', 'Provisioning SLA is 2 business days — today is the last safe day.'],
+        context: [{ k: 'Approver', v: 'Dana Whitfield · IT Ops manager' }, { k: 'Scope', v: '11 grants across Okta, Jira, Slack' }],
+        primary: 'Approve and file', secondary: ['Review the 11 grants', 'Reject'] },
+      { id: 't-mfa', type: 'ticket', when: 'stalled 26h', whenTone: '#a13b25', state: 'attention', owner: 'you', rev: true,
+        revNote: 'Nothing has been changed. This one is blocked on a person, not on a system.',
+        title: 'IT-3352 · Okta MFA reset for a contractor — blocked on a person', conf: 'Medium', pct: 62,
+        why: 'Policy needs the sponsoring manager to confirm identity, and Leo Marsh hasn\u2019t replied in 26 hours. I can\u2019t act for him.',
+        source: 'Jira IT-3352 · Okta policy MFA-RESET-02',
+        reasons: ['MFA-RESET-02 requires named sponsor confirmation for contractors.', 'I messaged Leo twice (09 Sep 15:04, 10 Sep 09:20) with no reply.', 'Escalating past a sponsor is your call, not mine.'],
+        context: [{ k: 'Contractor', v: 'V. Okoye · agency Brightline · access expires 20 Sep' }, { k: 'Options', v: 'Nudge Leo again · reassign sponsor to Dana' }],
+        primary: 'Nudge Leo again', secondary: ['Reassign sponsor', 'Leave with me'] },
+      { id: 't-jamf', type: 'email', when: 'due Friday', whenTone: '#a13b25', state: 'attention', owner: 'you', rev: false,
+        revNote: 'A spend commitment. I gathered the numbers and stopped there.',
+        title: 'Jamf renewal quote — decision needed by Friday', conf: 'Medium', pct: 58,
+        why: '14% increase on 420 seats. This is a spend commitment, so it is yours to make; I only gathered the numbers.',
+        source: 'Gmail thread · last year\u2019s invoice · Jamf seat count',
+        reasons: ['Quote is $61,740 vs $54,160 last year on the same seat count.', '412 of 420 seats are actually enrolled — 8 are spare.', 'Procurement needs a signed answer by Friday to hold the price.'],
+        context: [{ k: 'Comparison', v: 'Side-by-side of both years, ready to open' }, { k: 'Alternative', v: 'Drop to 412 seats saves $1,176' }],
+        primary: 'Open comparison', secondary: ['Forward to Dana', 'Remind me Thursday'] },
+      { id: 't-cab', type: 'meeting', when: '09:30', state: 'fyi', owner: 'agent', rev: true,
+        revNote: 'A brief, nothing sent. Yours to read or skip.',
+        title: 'Change Advisory Board — prep brief is ready', conf: 'High', pct: 95,
+        why: 'I pulled CHG-2214, the two deploys that clash with Friday\u2019s freeze, and last week\u2019s open actions into a one-page brief.',
+        source: 'Google Calendar · ServiceNow CHG-2214 · release board',
+        reasons: ['You are listed as a required approver on CHG-2214.', 'Two deploys overlap the Friday freeze window — the board will ask.', 'Three actions from last week are still open against IT-Ops.'],
+        context: [{ k: 'Brief', v: 'One page · change, conflicts, open actions' }, { k: 'Sent', v: 'Nothing — it sits with you' }],
+        primary: 'Open brief', secondary: ['Skip prep next time'] },
+      { id: 't-ravi', type: 'email', when: '08:02', state: 'confirm', owner: 'you', rev: true,
+        revNote: 'Reply and invite can both be pulled back within a 10 minute edit window.',
+        title: 'Ravi Anand — "postmortem slot for orders-db?"', conf: 'High', pct: 89,
+        why: 'He wants a 30-minute window this week. Thursday 15:00 is the only slot free for both of you and clear of the freeze.',
+        source: 'Gmail thread · Google Calendar availability',
+        reasons: ['Thursday 15:00 is the only mutual free slot before Friday.', 'It sits outside the change freeze, so nobody has to move a deploy.', 'You have accepted 6 of his last 7 suggested slots, so precedent is clear.'],
+        context: [{ k: 'Draft', v: 'Short reply + calendar invite for Thu 15:00' }, { k: 'Attendees', v: 'You, Ravi, Sana (optional)' }],
+        primary: 'Send reply and invite', secondary: ['Edit draft', 'Reject'] },
+      { id: 't-rma', type: 'ticket', when: '3 days to SLA', state: 'confirm', owner: 'you', rev: true,
+        revNote: 'Reversible until the vendor accepts the RMA — after that it becomes a return.',
+        title: 'IT-3288 · Laptop replacement for L. Ferrer — RMA drafted', conf: 'High', pct: 88,
+        why: 'Jamf shows the battery failing health checks. I filled the vendor RMA form from the device record; it is not submitted.',
+        source: 'Jira IT-3288 · Jamf device health · vendor portal',
+        reasons: ['Battery cycle count 1,043 with 71% design capacity — under warranty threshold.', 'Device is 19 months old and still covered until March.', 'Form is filled from the Jamf record, no manual retyping.'],
+        context: [{ k: 'Device', v: 'MBP-2312 · serial C02XL0··· · warranty to 12 Mar' }, { k: 'State', v: 'Draft in vendor portal, not submitted' }],
+        primary: 'Approve and submit', secondary: ['Edit form', 'Reject'] },
+      { id: 't-printer', type: 'ticket', when: '2 days to SLA', state: 'attention', owner: 'you', rev: true,
+        revNote: 'I stopped the auto-close rule from firing. Nothing has changed on the ticket.',
+        title: 'IT-3402 · Printer fleet auth failures — held back on purpose', conf: 'Medium', pct: 55,
+        why: 'The auto-close rule would fire today, but the requester is on medical leave. You rejected this once, so I stopped proposing it.',
+        source: 'Jira IT-3402 · Workday leave record · your rejection',
+        reasons: ['Workday shows the requester on leave until 24 Sep.', 'You rejected the same auto-close on 09 Sep with "needs a human".', 'I have applied that as a standing rule for leave-blocked tickets.'],
+        context: [{ k: 'Learned', v: 'Rule applied 09 Sep from your rejection' }, { k: 'Options', v: 'Extend SLA · assign to you on their return' }],
+        primary: 'Extend the SLA', secondary: ['Assign to me on return', 'Close anyway'] },
+      { id: 't-slack', type: 'slack', when: '08:41', state: 'confirm', owner: 'you', rev: true,
+        revNote: 'A Slack post can be deleted; I will delete it if you undo within the hour.',
+        title: '#it-oncall — draft status note on the Okta factor-sync blip', conf: 'High', pct: 90,
+        why: 'Six people asked in the channel this morning. The incident is closed, and one note stops six separate answers.',
+        source: 'Slack #it-oncall · Okta system log · IT-3384',
+        reasons: ['6 messages in #it-oncall reference the same 7:28–7:49 window.', 'Okta confirms factor-sync degradation, now resolved.', 'You posted the same shape of note for the March blip.'],
+        context: [{ k: 'Draft', v: '3 lines: what happened, who was hit, what to do if still stuck' }, { k: 'Post as', v: 'You, in #it-oncall' }],
+        primary: 'Post to #it-oncall', secondary: ['Edit note', 'Reject'] },
+      { id: 't-dana', type: 'meeting', when: '11:00', state: 'fyi', owner: 'agent', rev: true,
+        revNote: 'Numbers attached to your brief only. Nothing sent to Dana.',
+        title: '1:1 with Dana Whitfield — SLA numbers attached', conf: 'High', pct: 93,
+        why: 'She asked for the first-response trend last week; IT-2 sits at 19 min against a 15 min goal.',
+        source: 'Google Calendar · Jira SLA report · her Slack DM',
+        reasons: ['Her DM on 04 Sep asked for the trend at your next 1:1.', 'IT-2 first response is 19 min, down from 26 min in July.', 'The Q3 team OKR target is 15 min, so the gap will come up.'],
+        context: [{ k: 'Brief', v: '3 charts: trend, backlog, reopen rate' }, { k: 'Open topic', v: 'Two unstaffed on-call weekends in October' }],
+        primary: 'Open brief', secondary: ['Add a topic'] },
+      { id: 't-asset', type: 'ticket', when: 'running · 9 of 15', state: 'progress', owner: 'agent', rev: true,
+        revNote: 'I write to a scratch column only. Nothing in the audit sheet is overwritten.',
+        title: 'Q3 asset audit — pre-matching serials in a scratch column', conf: 'Medium', pct: 67,
+        why: 'The audit closes Friday. I am matching Jamf serials to the audit sheet so you only look at the ones I cannot explain.',
+        source: 'Jamf Pro (412 enrolled) · Q3 Asset Audit sheet (397 rows)',
+        reasons: ['9 of 15 unmatched serials now have a confident Jamf match.', '6 have no clean match and may be loaners — those come to you.', 'All writes land in a scratch column named coworker-match.'],
+        context: [{ k: 'Progress', v: '9 matched · 6 unresolved · started 08:20' }, { k: 'Output', v: 'Scratch column, nothing overwritten' }],
+        primary: 'Watch progress', secondary: ['Hold it', 'Take it over'] },
+      { id: 't-review', type: 'meeting', when: '14:00 · handled 08:12', state: 'handled', owner: 'agent', rev: true,
+        revNote: 'I attached evidence to the incident. Detaching it is one click.',
+        title: 'Incident review with Sana — INC-4821 timeline drafted', conf: 'High', pct: 96,
+        why: 'I assembled the timeline and attached the logs this morning so the review can start from evidence.',
+        source: 'PagerDuty INC-4821 · Datadog logs',
+        reasons: ['Runbook INC-DB-02 names the exact log set for orders-db incidents.', 'Attaching within 15 minutes is a SOC 2 control you are measured on.', 'Same attachment pattern as the last 9 Sev-2s.'],
+        context: [{ k: 'Attached', v: '4 log ranges + timeline, 08:12' }, { k: 'Undo', v: 'Detach and clear the timeline' }],
+        primary: 'View timeline', secondary: ['Undo attachment'] },
+      { id: 't-digest', type: 'email', when: '17:00 · scheduled', state: 'handled', owner: 'agent', rev: true,
+        revNote: 'Reversible until 17:00 — cancel or edit any time before it sends.',
+        title: 'Weekly SLA digest to Dana — scheduled to send', conf: 'High', pct: 92,
+        why: 'Same digest you sent the last six Mondays, with this week\u2019s numbers filled in.',
+        source: 'Gmail · Jira SLA report · your sent history',
+        reasons: ['You sent this digest 6 Mondays in a row, always between 16:40 and 17:20.', 'Only the numbers change week to week.', 'Dana replies to it, so it is read.'],
+        context: [{ k: 'Sends', v: 'Today 17:00 to Dana Whitfield' }, { k: 'Changed', v: 'First response 19 min (was 21) · 4 reopens' }],
+        primary: 'Review the draft', secondary: ['Cancel the send'] }
+    ];
+  }
+
+  move(id, dir) {
+    this.setState(s => {
+      const o = s.order.slice();
+      const i = o.indexOf(id), j = i + dir;
+      if (i < 0 || j < 0 || j >= o.length) return null;
+      o[i] = o[j]; o[j] = id;
+      return { order: o };
+    });
+  }
+
+  renderVals() {
+    const TAG = {
+      handled: { tag: 'Handled', tagBg: 'rgba(216,253,73,.5)', tagFg: '#3c4a06', border: 'rgba(0,0,0,.05)' },
+      fyi: { tag: 'FYI', tagBg: 'rgba(0,0,0,.05)', tagFg: '#3a3a40', border: 'rgba(0,0,0,.05)' },
+      confirm: { tag: 'Confirm', tagBg: 'rgba(52,60,237,.1)', tagFg: '#343ced', border: 'rgba(52,60,237,.3)' },
+      attention: { tag: 'Your attention', tagBg: 'rgba(154,106,18,.14)', tagFg: '#7f5610', border: 'rgba(154,106,18,.35)' }
+    };
+    const btn = (label, primary) => ({
+      label: label,
+      bg: primary ? '#343ced' : '#ffffff',
+      border: primary ? '#343ced' : 'rgba(0,0,0,.12)',
+      fg: primary ? '#ffffff' : '#3a3a40',
+      onClick: () => this.setState({ view: 'detail' })
+    });
+    const item = (when, whenFg, title, why, source, kind, buttons, note) => Object.assign({
+      when: when, whenFg: whenFg || '#1c1c20', title: title, why: why, source: source, buttons: buttons, note: note
+    }, TAG[kind]);
+
+    const dayGroups = [
+      { title: 'Meetings', meta: '4 today · prep for 3',
+        items: [
+          item('09:30', '#1c1c20', 'Change Advisory Board — prep brief is ready',
+            'I pulled CHG-2214, the two deploys that clash with Friday\u2019s freeze, and last week\u2019s open actions into a one-page brief.',
+            'Google Calendar · ServiceNow CHG-2214 · release board', 'fyi',
+            [btn('Open brief', true), btn('Skip prep')], 'nothing sent — yours to read'),
+          item('11:00', '#1c1c20', '1:1 with Dana Whitfield — SLA numbers attached',
+            'She asked for first-response trend last week; IT-2 sits at 19 min against a 15 min goal.',
+            'Google Calendar · Jira SLA report · her Slack DM', 'fyi',
+            [btn('Open brief', true), btn('Add a topic')], 'reversible'),
+          item('14:00', '#1c1c20', 'Incident review with Sana — INC-4821 timeline drafted',
+            'I assembled the timeline and the logs I attached this morning so the review can start from evidence.',
+            'PagerDuty INC-4821 · Datadog logs', 'handled',
+            [btn('View timeline', true), btn('Undo')], 'attached automatically at 08:12'),
+          item('16:00', '#7f5610', 'New-hire onboarding sync — access batch must be filed first',
+            'Three hires start Monday. Provisioning takes two days, so the request has to go today for them to have day-one access.',
+            'Workday starts · Okta baseline v6 · calendar invite', 'confirm',
+            [btn('Approve and file', true), btn('Edit'), btn('Reject')], 'reversible · withdrawable')
+        ] },
+      { title: 'Tickets near SLA', meta: 'next 3 days · 4 at risk',
+        items: [
+          item('5h left', '#7f5610', 'IT-3391 · VPN access denied — reply drafted',
+            'Marta\u2019s device certificate expired on Sep 8. The runbook fix closed 13 of the last 14 tickets with this signature.',
+            'Jira IT-3391 · Okta cert log · runbook VPN-CERT-04', 'confirm',
+            [btn('Approve and send', true), btn('Edit'), btn('Reject')], 'reversible · high confidence'),
+          item('2 days', '#7f5610', 'IT-3352 · Okta MFA reset for a contractor — blocked on a person',
+            'Policy needs the sponsoring manager to confirm identity, and Leo Marsh hasn\u2019t replied in 26 hours. I can\u2019t act for him.',
+            'Jira IT-3352 · Okta policy MFA-RESET-02', 'attention',
+            [btn('Nudge Leo', true), btn('Reassign')], 'needs a human decision'),
+          item('2 days', '#7f5610', 'IT-3402 · Printer fleet auth failures — held back on purpose',
+            'The auto-close rule would fire today, but the requester is on medical leave. You rejected this once, so I stopped proposing it.',
+            'Jira IT-3402 · Workday leave record · your rejection', 'attention',
+            [btn('Extend SLA', true), btn('Assign to me')], 'learning applied Sep 9'),
+          item('3 days', '#1c1c20', 'IT-3288 · Laptop replacement for L. Ferrer — RMA drafted',
+            'Jamf shows the battery failing health checks. I filled the vendor RMA form from the device record; it is not submitted.',
+            'Jira IT-3288 · Jamf device health · vendor portal', 'confirm',
+            [btn('Approve and submit', true), btn('Edit'), btn('Reject')], 'reversible until vendor accepts')
+        ] },
+      { title: 'Email', meta: '3 threads · 2 drafts',
+        items: [
+          item('08:02', '#1c1c20', 'Ravi Anand — "postmortem slot for orders-db?"',
+            'He wants a 30-minute window this week. Thursday 15:00 is the only slot free for both of you and clear of the freeze.',
+            'Gmail thread · Google Calendar availability', 'confirm',
+            [btn('Send reply + invite', true), btn('Edit'), btn('Reject')], 'reversible · 10 min edit window'),
+          item('Yesterday', '#7f5610', 'Jamf renewal quote — decision needed by Friday',
+            '14% increase on 420 seats. This is a spend commitment, so it is yours to make; I only gathered the numbers.',
+            'Gmail thread · last year\u2019s invoice · Jamf seat count', 'attention',
+            [btn('Open comparison', true), btn('Forward to Dana')], 'no action taken'),
+          item('17:00', '#1c1c20', 'Weekly SLA digest to Dana — scheduled to send',
+            'Same digest you sent the last six Mondays, with this week\u2019s numbers filled in.',
+            'Gmail · Jira SLA report · your sent history', 'handled',
+            [btn('Review draft', true), btn('Undo')], 'reversible until 17:00')
+        ] }
+    ];
+
+    const modeStyles = {
+      Delegate: { bg: 'rgba(52,60,237,.09)', fg: '#343ced' },
+      Ask: { bg: 'rgba(0,0,0,.05)', fg: '#3a3a40' },
+      Approval: { bg: 'rgba(154,106,18,.12)', fg: '#7f5610' },
+      Escalate: { bg: 'rgba(161,59,37,.1)', fg: '#a13b25' },
+      Notify: { bg: 'rgba(216,253,73,.45)', fg: '#3c4a06' }
+    };
+    const peopleData = [
+      { initials: 'DW', name: 'Dana Whitfield', role: 'IT Ops Manager', intent: 'Approval', upper: 'DANA',
+        headline: 'Dana signs off anything that grants access, so I prepare the request and let her approve it — I never grant it myself.',
+        rows: [
+          { k: 'Why her', v: 'Named approver on 38 of your 41 access requests this quarter' },
+          { k: 'Pulled from', v: 'Okta approval chain · Workday: your reporting manager' },
+          { k: 'Typical wait', v: 'Approves this request type in about 4 hours' }
+        ] },
+      { initials: 'SL', name: 'Sana Lund', role: 'SRE · Incident Commander', intent: 'Escalate', upper: 'SANA',
+        headline: 'On a Sev-2 I hand Sana the evidence pack and the timeline, then let her decide whether it becomes a Sev-1.',
+        rows: [
+          { k: 'Why her', v: 'Commanded 9 of the last 11 incidents you worked' },
+          { k: 'Pulled from', v: 'PagerDuty incident roles · Friday incident review invite' },
+          { k: 'Boundary', v: 'I draft the escalation; the page itself always waits for you' }
+        ] },
+      { initials: 'RA', name: 'Ravi Anand', role: 'Database On-call Lead', intent: 'Escalate', upper: 'RAVI',
+        headline: 'Ravi owns orders-db. When latency breaches the runbook threshold he is who the escalation goes to.',
+        rows: [
+          { k: 'Why him', v: 'On-call for the DB rota until 6pm today' },
+          { k: 'Pulled from', v: 'PagerDuty schedule · service ownership in the catalog' },
+          { k: 'Boundary', v: 'Paging is irreversible, so it is approval-only at any confidence' }
+        ] },
+      { initials: 'FT', name: 'Femi Tade', role: 'Asset & Endpoint Analyst', intent: 'Delegate', upper: 'FEMI',
+        headline: 'Femi owns the asset audit, so unmatched serials I cannot explain go to him as a short task rather than back to you.',
+        rows: [
+          { k: 'Why him', v: 'Owner of the Q3 audit sheet and 6 of its open comments' },
+          { k: 'Pulled from', v: 'Jamf admin roles · shared sheet history' },
+          { k: 'What I send', v: 'A list of serials with what I already checked' }
+        ] },
+      { initials: 'PR', name: 'Priya Raman', role: 'Change Manager', intent: 'Notify', upper: 'PRIYA',
+        headline: 'Priya owns the change freeze, so anything that touches a scheduled deploy gets her on the thread.',
+        rows: [
+          { k: 'Why her', v: 'Filed the freeze notice and chairs the CAB' },
+          { k: 'Pulled from', v: 'ServiceNow CAB membership · #it-announcements post' },
+          { k: 'What I send', v: 'A conflict summary, never a decision on her behalf' }
+        ] },
+      { initials: 'JK', name: 'Jen Kwon', role: 'IT Communications', intent: 'Ask', upper: 'JEN',
+        headline: 'Jen owns the notice templates. If a message needs wording outside the template, I ask her instead of improvising.',
+        rows: [
+          { k: 'Why her', v: 'Owner of the "Planned maintenance" and Sev-1 comms templates' },
+          { k: 'Pulled from', v: 'Slack channel ownership · template page in Confluence' },
+          { k: 'What I send', v: 'The draft plus what I think is missing' }
+        ] }
+    ];
+    const segT = (on, lv) => (on ? (lv === 2 ? '#7f5610' : '#343ced') : '#d9d9df');
+    const mkTask = (label, upper, headline, evidence, plan, conf, lv, confNote) => ({
+      label: label, upper: upper, headline: headline, evidence: evidence, plan: plan, conf: conf, confNote: confNote,
+      s1: segT(lv >= 1, lv), s2: segT(lv >= 2, lv), s3: segT(lv >= 3, lv)
+    });
+    const taskData = [
+      mkTask('Triage the IT-2 queue', 'QUEUE TRIAGE',
+        'You clear overnight tickets in one 8am pass, and you work them in a fixed order: access, then VPN, then hardware.',
+        [
+          { k: 'Observed', v: '214 tickets closed in 90 days · 92% of your first touches land between 08:00 and 08:40' },
+          { k: 'Pattern', v: 'Access requests answered first (median 9 min), hardware last (median 3h 20m)' },
+          { k: 'Pulled from', v: 'Jira Service Desk activity log · queue IT-2 · your assignee history' }
+        ],
+        'Pre-sort the queue before you open it and draft replies for the five patterns you answer the same way every time.',
+        'High', 3, 'Three months of consistent behaviour with no counter-examples.'),
+      mkTask('VPN & cert escalations', 'VPN & CERTS',
+        'Expired device certificates are the single biggest cause of VPN tickets you see, and you always fix them with the same runbook.',
+        [
+          { k: 'Observed', v: '41 VPN tickets in 90 days · 14 with the cert-expiry signature · 13 closed by re-issue' },
+          { k: 'Runbook', v: 'VPN-CERT-04, which you wrote and last updated in August' },
+          { k: 'Pulled from', v: 'Jira Service Desk · Okta device-cert expiry log · Confluence page history' }
+        ],
+        'Draft the runbook reply the moment a cert-expiry ticket lands, and hold it for your approval rather than sending it.',
+        'High', 3, 'The signature is unambiguous and your fix has not varied.'),
+      mkTask('New-hire access batches', 'NEW-HIRE ACCESS',
+        'You file access for new starters in one batch, and you do it two working days before their start date.',
+        [
+          { k: 'Observed', v: '11 batches in 90 days · 3.2 hires per batch · always filed Thu for a Mon start' },
+          { k: 'Baseline', v: 'Access baseline v6 — three entitlements per IT-Ops hire, no privileged scopes' },
+          { k: 'Pulled from', v: 'Workday start dates · Okta group grants · your request history' }
+        ],
+        'Prepare the batch on Thursday morning with the baseline entitlements filled in, and bring it to you to file.',
+        'High', 3, 'Roster and baseline agree; only the filing needs your name on it.'),
+      mkTask('Sev-2 evidence capture', 'INCIDENT EVIDENCE',
+        'On every Sev-2 you attach query and pool logs before anyone starts diagnosing.',
+        [
+          { k: 'Observed', v: '9 of the last 9 Sev-2s · logs attached within 15 min of the incident opening' },
+          { k: 'Runbook', v: 'INC-DB-02 § "Evidence capture before escalation"' },
+          { k: 'Pulled from', v: 'PagerDuty incident timeline · Datadog log queries · INC attachments' }
+        ],
+        'Attach the runbook log set automatically as soon as a Sev-2 opens — it is additive and I can remove it in one click.',
+        'High', 3, 'A deterministic runbook step with a fixed log query.'),
+      mkTask('Okta group reviews', 'ACCESS REVIEWS',
+        'You review the it-ops-* groups once a quarter and remove stale members, but you never revoke without checking with the manager first.',
+        [
+          { k: 'Observed', v: '3 reviews on record · 2 of 3 late by more than a week · 14 removals, all manager-confirmed' },
+          { k: 'Last run', v: 'July 2 · next one due end of September' },
+          { k: 'Pulled from', v: 'Okta system log · your review notes in Confluence' }
+        ],
+        'Assemble the diff and the manager list for you. I will never revoke access on my own — that stays a decision you make.',
+        'Medium', 2, 'Your cadence slips, so I am unsure whether to nudge you or wait to be asked.'),
+      mkTask('Quarterly asset audit', 'ASSET AUDIT',
+        'You reconcile Jamf against the asset sheet each quarter, and the gap is usually loaner laptops rather than losses.',
+        [
+          { k: 'Observed', v: '2 audits on record · 15–19 unmatched serials each time · 80% resolved as loaners' },
+          { k: 'Deadline', v: 'Q3 sign-off is this Friday' },
+          { k: 'Pulled from', v: 'Jamf inventory export · "Q3 Asset Audit" sheet history' }
+        ],
+        'Pre-match the serials in a scratch column and hand you only the ones I cannot explain.',
+        'Medium', 2, 'Six serials have no clean match this quarter — those need your judgement, not mine.')
+    ];
+    const vms = this.state.actions.map(a => this.vm(a));
+    const tab = this.state.tab;
+    const byTab = {
+      active: vms.filter(a => a.status === 'active'),
+      approval: vms.filter(a => a.status === 'approval'),
+      done: vms.filter(a => a.status === 'done'),
+      decisions: vms.slice(),
+      day: []
+    };
+    const tabDefs = [
+      ['day', 'Your day'], ['active', 'Active tasks'], ['approval', 'Awaiting approval'], ['done', 'Done'], ['decisions', 'Decisions']
+    ];
+    const sel = vms.find(a => a.id === this.state.selected) || vms[0];
+    const view = this.state.view;
+    const nApproval = byTab.approval.length, nActive = byTab.active.length, nDone = byTab.done.length;
+    const rejectReasons = ['Not my call to make', 'Wrong fix for this', 'Needs a human', 'Timing is off', 'Missing context'];
+    const TYPE_LABEL = { meeting: 'Meeting', ticket: 'Ticket near SLA', email: 'Email', slack: 'Slack thread' };
+    const TYPE_STYLE = {
+      meeting: { bg: 'rgba(52,60,237,.09)', fg: '#343ced' },
+      ticket: { bg: 'rgba(154,106,18,.12)', fg: '#7f5610' },
+      email: { bg: 'rgba(0,0,0,.055)', fg: '#3a3a40' },
+      slack: { bg: 'rgba(97,31,105,.1)', fg: '#611f69' }
+    };
+    const ST = {
+      confirm: { label: 'Confirm', bg: 'rgba(52,60,237,.1)', fg: '#343ced' },
+      attention: { label: 'Your attention', bg: 'rgba(154,106,18,.14)', fg: '#7f5610' },
+      progress: { label: 'Agent running', bg: 'rgba(52,60,237,.08)', fg: '#343ced' },
+      handled: { label: 'Handled', bg: 'rgba(216,253,73,.5)', fg: '#3c4a06' },
+      fyi: { label: 'FYI', bg: 'rgba(0,0,0,.05)', fg: '#3a3a40' }
+    };
+    const TYPES = [['all', 'Everything'], ['meeting', 'Meetings'], ['ticket', 'Tickets near SLA'], ['email', 'Email'], ['slack', 'Slack threads']];
+    const STATE_MATCH = {
+      all: () => true,
+      handled: t => t.state === 'handled',
+      progress: t => t.state === 'progress',
+      prep: t => t.state === 'confirm' || t.state === 'fyi',
+      attention: t => t.state === 'attention'
+    };
+    const taskById = {};
+    this.dayTaskSeed().forEach(t => { taskById[t.id] = t; });
+    const allTasks = this.state.order.map(id => taskById[id]).filter(Boolean);
+    const shown = allTasks.filter(t => (this.state.ftype === 'all' || t.type === this.state.ftype) && STATE_MATCH[this.state.fstate](t));
+    const open = allTasks.find(t => t.id === this.state.openTask) || null;
+    const yourCount = allTasks.filter(t => t.state === 'confirm' || t.state === 'attention').length;
+    const agentCount = allTasks.filter(t => t.state === 'progress' || t.state === 'handled' || t.state === 'fyi').length;
+
+    const rowVM = (t) => ({
+      id: t.id, when: t.when, whenFg: t.whenTone || '#6b6b72', title: t.title, why: t.why, source: t.source,
+      kind: t.type === 'meeting' ? (t.state === 'confirm' ? 'Before your 16:00' : 'Meeting prep')
+        : t.type === 'ticket' ? (t.state === 'progress' ? 'Ticket work' : 'Ticket · near SLA')
+        : t.type === 'email' ? (t.state === 'handled' ? 'Email · scheduled' : 'Email') : 'Slack thread',
+      isMeeting: t.type === 'meeting', isTicket: t.type === 'ticket', isEmail: t.type === 'email', isSlack: t.type === 'slack',
+      iconBg: TYPE_STYLE[t.type].bg, iconFg: TYPE_STYLE[t.type].fg,
+      stateLabel: ST[t.state].label, stateFg: ST[t.state].fg,
+      irreversible: !t.rev,
+      running: t.state === 'progress',
+      finished: t.state === 'handled',
+      primary: t.primary,
+      cardBg: this.state.openTask === t.id ? 'rgba(52,60,237,.04)' : '#ffffff',
+      cardBorder: this.state.openTask === t.id ? 'rgba(52,60,237,.45)' : 'rgba(0,0,0,.06)',
+      onOpen: () => this.setState({ openTask: t.id })
+    });
+    const nDoneB = allTasks.filter(t => t.state === 'handled').length;
+    const nRun = allTasks.filter(t => t.state === 'progress').length;
+    const nPrep = allTasks.filter(t => t.state === 'confirm' || t.state === 'fyi').length;
+    const nJudge = allTasks.filter(t => t.state === 'attention').length;
+    const pct = (n) => (allTasks.length ? Math.round((n / allTasks.length) * 1000) / 10 : 0) + '%';
+
+    const tourAll = this.tourSteps();
+    const ti = Math.min(this.state.tstep, tourAll.length - 1);
+    const tstep = tourAll[ti];
+
+    const flowDefs = [
+      { key: 'home', set: { view: 'home' }, label: 'Glean today', note: 'The app as it is now — the coworker waits in the rail, nothing opened yet.' },
+      { key: 'context', set: { view: 'onboarding' }, label: 'Your context', note: 'First run only: a profile of what the coworker knows and what is coming your way — sourced and correctable. Seen once, the rail opens straight to your day.' },
+      { key: 'day', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null }, label: 'Your day', note: 'One list for the whole day. The icon says what kind of work it is, the dot says who has it, and anything that cannot be undone is called out.' },
+      { key: 'approval', set: { view: 'panel', fstate: 'prep', ftype: 'all', openTask: null }, label: 'Drafted for you', note: 'Filtered to what is waiting on you. Drafts are written; each is one tap.' },
+      { key: 'expanded', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: 't-onboard' }, label: 'Task expanded', note: 'Clicking a task opens it on the right: reasoning, sources, confidence, and whether it can be undone.' },
+      { key: 'decision', set: { view: 'detail' }, label: 'Full decision', note: 'The deep view for a call that deserves reading in full before you answer.' }
+    ];
+    const flowKey = this.state.view === 'home' ? 'home'
+      : this.state.view === 'onboarding' ? 'context'
+      : this.state.view === 'detail' ? 'decision'
+      : this.state.openTask ? 'expanded'
+      : this.state.fstate === 'prep' ? 'approval' : 'day';
+    let fi = flowDefs.findIndex(f => f.key === flowKey);
+    if (fi < 0) fi = 2;
+
+    return {
+      // shell
+      scrimOn: false,
+      showList: view === 'panel',
+      showDetail: view === 'detail',
+      showOnboarding: view === 'onboarding',
+      coworkerRailColor: view === 'home' ? '#74747a' : '#1c1c20',
+      coworkerRailBar: view === 'home' ? 'transparent' : '#343ced',
+      goHome: () => this.setState({ view: 'home' }),
+      openCoworker: () => this.setState({ view: view !== 'home' ? 'home' : (this.state.seenContext ? 'panel' : 'onboarding') }),
+      backToList: () => this.setState({ view: 'panel', rejecting: false }),
+      finishOnboarding: () => this.setState({ view: 'panel', tab: 'day', seenContext: true }),
+      openContext: () => this.setState({ view: 'onboarding' }),
+      firstRun: !this.state.seenContext,
+      returning: this.state.seenContext,
+      contextEyebrow: this.state.seenContext ? 'YOUR CONTEXT' : 'FIRST RUN · YOUR CONTEXT',
+      contextTitle: this.state.seenContext ? 'What I understand about you.' : 'This is everything coming your way.',
+      contextSub: this.state.seenContext
+        ? 'Your profile as I hold it — pulled from your connected tools, editable any time.'
+        : 'Before I touch anything, here is what I know about you and the work heading your way. Correct anything and I will work from your version.',
+      contextCta: this.state.seenContext ? 'Back to your day' : 'This is right — show me today',
+
+      // panel
+      summaryLine: tab === 'day' ? '4 meetings · 4 tickets near SLA · 3 email threads. I prepped what I could, handled 3 things outright, and left 4 for you.' : nApproval + ' need you · ' + nActive + ' running now · ' + nDone + ' finished since 7:58am. I stopped short of anything I could not undo.',
+      tabs: tabDefs.map(([k, label]) => ({
+        label: label,
+        count: k === 'day' ? 11 : byTab[k].length,
+        color: tab === k ? '#1c1c20' : '#5b5b61',
+        weight: tab === k ? '600' : '500',
+        bar: tab === k ? '#343ced' : 'transparent',
+        countBg: tab === k ? 'rgba(52,60,237,.12)' : 'rgba(0,0,0,.05)',
+        countFg: tab === k ? '#343ced' : '#5b5b61',
+        onClick: () => this.setState({ tab: k })
+      })),
+      stats: [
+        { n: '3', label: 'Handled', sub: 'Done automatically, all reversible', fg: '#266749', border: 'rgba(38,103,73,.25)' },
+        { n: '2', label: 'In progress', sub: 'Asset reconcile · freeze conflicts', fg: '#343ced', border: 'rgba(52,60,237,.25)' },
+        { n: '4', label: 'Need you', sub: 'One tap each — drafts are ready', fg: '#1c1c20', border: 'rgba(0,0,0,.06)' },
+        { n: '2', label: 'Critical', sub: 'MFA reset stalled 26h · Jamf quote due Fri', fg: '#a13b25', border: 'rgba(161,59,37,.3)' }
+      ],
+      showDay: tab === 'day',
+      dayGroups: dayGroups,
+      visible: byTab[tab],
+      safeCount: byTab.approval.filter(a => a.reversible).length,
+      approveAllSafe: () => this.setState(s => ({
+        actions: s.actions.map(a => (this.eff(a) === 'approval' && a.reversible)
+          ? Object.assign({}, a, { status: 'done', resolution: 'Approved in bulk', time: 'just now' }) : a)
+      })),
+
+      // detail
+      sel: sel,
+      rejecting: this.state.rejecting,
+      notRejecting: !this.state.rejecting,
+      startReject: () => this.setState({ rejecting: true }),
+      cancelReject: () => this.setState({ rejecting: false }),
+      approveSelected: () => { this.resolve(sel.id, 'done', 'Approved by you'); this.setState({ view: 'panel', tab: 'done' }); },
+      reasons: rejectReasons.map(r => ({
+        label: r,
+        onClick: () => { this.resolve(sel.id, 'rejected', 'Rejected by you — "' + r + '"'); this.setState({ view: 'panel', tab: 'decisions' }); }
+      })),
+      showBars: this.props.confidenceStyle !== 'label',
+
+      // switcher
+      switcher: [],
+
+      // guided tour
+      frameRef: this.frameRef,
+      tourOn: this.state.tourOn,
+      tourOff: !this.state.tourOn,
+      spot: this.state.spot || { top: -9999, left: -9999, w: 0, h: 0, tipTop: -9999, tipLeft: -9999 },
+      hasSpot: !!this.state.spot,
+      tourTitle: tstep.title,
+      tourBody: tstep.body,
+      tourCta: tstep.cta || '',
+      hasCta: !!tstep.cta,
+      tourPos: (ti + 1) + ' of ' + tourAll.length,
+      tourPct: Math.round(((ti + 1) / tourAll.length) * 100) + '%',
+      tourNext: () => this.goTour(ti + 1),
+      tourPrev: () => this.goTour(ti - 1),
+      tourRestart: () => this.goTour(0),
+      tourStop: () => this.setState({ tourOn: false, spot: null, view: 'panel', fstate: 'all', ftype: 'all', openTask: null, seenContext: true }),
+      jumps: [
+        { label: 'Home', set: { view: 'home' } },
+        { label: 'Your context', set: { view: 'onboarding' } },
+        { label: 'Your day', set: { view: 'panel', fstate: 'all', ftype: 'all', openTask: null } }
+      ].map(j => ({
+        label: j.label,
+        fg: this.state.view === j.set.view && !this.state.tourOn ? '#343ced' : '#7a7468',
+        onClick: () => this.setState(Object.assign({ tourOn: false, spot: null, seenContext: true }, j.set))
+      })),
+      tourStart: () => this.goTour(ti),
+      atTourEnd: ti === tourAll.length - 1,
+      notTourEnd: ti !== tourAll.length - 1,
+      tourDots: tourAll.map((s2, i) => ({
+        bg: i === ti ? '#343ced' : (i < ti ? 'rgba(52,60,237,.35)' : 'rgba(0,0,0,.13)'),
+        w: i === ti ? '18px' : '7px',
+        onClick: () => this.goTour(i)
+      })),
+
+      // ── your day ──
+      dayTitle: 'Hey Akhilesh — here is your day.',
+      daySub: agentCount + ' tasks are already off your plate. ' + yourCount + ' tasks are drafted and waiting on your word.',
+      bandHeadline: 'I have already touched all ' + allTasks.length + ' things on your day.',
+      bandSub: nJudge + ' need your judgement. The rest I either finished, am running now, or have drafted for one tap.',
+      bandSegs: [
+        { w: pct(nDoneB), bg: '#d8fd49' },
+        { w: pct(nRun), bg: '#ffffff' },
+        { w: pct(nPrep), bg: 'rgba(255,255,255,.55)' },
+        { w: pct(nJudge), bg: 'rgba(255,255,255,.3)' }
+      ],
+      bandLegend: [
+        { k: 'handled', n: String(nDoneB), label: 'Finished by me', dot: '#d8fd49' },
+        { k: 'progress', n: String(nRun), label: 'Running now', dot: '#ffffff' },
+        { k: 'prep', n: String(nPrep), label: 'Drafted, one tap', dot: 'rgba(255,255,255,.55)' },
+        { k: 'attention', n: String(nJudge), label: 'Yours to judge', dot: 'rgba(255,255,255,.3)' }
+      ].map(l => Object.assign(l, {
+        bg: this.state.fstate === l.k ? 'rgba(255,255,255,.2)' : 'transparent',
+        border: this.state.fstate === l.k ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.16)',
+        onClick: () => this.setState({ fstate: this.state.fstate === l.k ? 'all' : l.k, openTask: null })
+      })),
+      typeFilters: TYPES.filter(t => t[0] !== 'all').map(t => ({
+        label: t[1],
+        count: allTasks.filter(x => x.type === t[0]).length,
+        bg: this.state.ftype === t[0] ? '#1c1c20' : '#ffffff',
+        fg: this.state.ftype === t[0] ? '#ffffff' : '#6b6b72',
+        isMeeting: t[0] === 'meeting', isTicket: t[0] === 'ticket', isEmail: t[0] === 'email', isSlack: t[0] === 'slack',
+        onClick: () => this.setState({ ftype: this.state.ftype === t[0] ? 'all' : t[0], openTask: null })
+      })),
+      shownCount: shown.length + (shown.length === 1 ? ' task' : ' tasks'),
+      filtered: this.state.fstate !== 'all' || this.state.ftype !== 'all',
+      clearFilters: () => this.setState({ fstate: 'all', ftype: 'all', openTask: null }),
+      yourRows: shown.filter(t => t.state === 'confirm' || t.state === 'attention').map(t => rowVM(t)),
+      agentRows: shown.filter(t => t.state === 'progress' || t.state === 'handled' || t.state === 'fyi').map(t => rowVM(t)),
+      hasYourRows: shown.some(t => t.state === 'confirm' || t.state === 'attention'),
+      hasAgentRows: shown.some(t => t.state === 'progress' || t.state === 'handled' || t.state === 'fyi'),
+      yourHead: shown.filter(t => t.state === 'confirm' || t.state === 'attention').length + ' waiting on you',
+      agentHead: shown.filter(t => t.state === 'progress' || t.state === 'handled' || t.state === 'fyi').length + ' carried by the agent',
+      signals: [
+        { time: '09:07', kind: 'Slack thread', text: '#it-oncall — "VPN still bouncing for me?"', out: 'reading it now', isSlack: true },
+        { time: '09:02', kind: 'Email', text: 'Ravi Anand — postmortem slot for orders-db', out: 'became a draft reply', isEmail: true },
+        { time: '08:47', kind: 'Ticket', text: 'IT-3391 raised — VPN access denied', out: 'became a drafted fix', isTicket: true },
+        { time: '08:31', kind: 'Meeting invite', text: 'New-hire onboarding sync, 16:00', out: 'became an access batch', isMeeting: true },
+        { time: '08:14', kind: 'Ticket', text: 'IT-3402 auth failures — SLA rule fired', out: 'held back for you', isTicket: true },
+        { time: '07:58', kind: 'Email', text: 'Jamf renewal quote from procurement', out: 'left with you — spend call', isEmail: true }
+      ],
+      goalsMini: [
+        { title: 'First response under 15 min', pct: '72%', metric: '19 min now', bar: '#343ced', note: 'IT-2 queue · team OKR' },
+        { title: 'Zero day-one access gaps', pct: '90%', metric: '1 gap this quarter', bar: '#266749', note: 'Company objective' },
+        { title: 'Sev-2 evidence within 15 min', pct: '100%', metric: '9 of 9', bar: '#266749', note: 'SOC 2 control CC7.3' },
+        { title: 'Q3 asset audit fully explained', pct: '60%', metric: '9 of 15 matched', bar: '#7f5610', note: 'Closes Friday' }
+      ],
+      paused: this.state.paused,
+      pauseLabel: this.state.paused ? 'Paused for today — resume' : 'Pause the coworker for today',
+      pauseFg: this.state.paused ? '#a13b25' : '#57575d',
+      togglePause: () => this.setState(s => ({ paused: !s.paused })),
+      openTaskOn: !!open,
+      noTaskOpen: !open,
+      closeTaskPanel: () => this.setState({ openTask: null }),
+      openFullDecision: () => this.setState({ view: 'detail' }),
+      det: open ? {
+        title: open.title, why: open.why, source: open.source, when: open.when,
+        typeLabel: TYPE_LABEL[open.type], typeBg: TYPE_STYLE[open.type].bg, typeFg: TYPE_STYLE[open.type].fg,
+        stateLabel: ST[open.state].label, stateBg: ST[open.state].bg, stateFg: ST[open.state].fg,
+        revTitle: open.rev ? 'Reversible' : 'Not reversible',
+        revNote: open.revNote,
+        revBg: open.rev ? 'rgba(38,103,73,.08)' : 'rgba(161,59,37,.07)',
+        revFg: open.rev ? '#266749' : '#a13b25',
+        reasons: open.reasons, context: open.context, conf: open.conf,
+        s1: '#343ced', s2: open.conf === 'Low' ? 'rgba(0,0,0,.1)' : '#343ced', s3: open.conf === 'High' ? '#343ced' : 'rgba(0,0,0,.1)',
+        primary: open.primary, secondary: open.secondary
+      } : null,
+
+      // homepage tiles
+      tiles: [
+        { k: 'IT', label: 'IT-2 queue', bg: '#2f6fd0', fg: '#fff' },
+        { k: 'DD', label: 'orders-db p95', bg: '#6c3fd1', fg: '#fff' },
+        { k: 'OK', label: 'Okta admin', bg: '#1e3a8a', fg: '#fff' },
+        { k: 'RB', label: 'VPN runbooks', bg: '#2a6f5c', fg: '#fff' },
+        { k: 'AS', label: 'Q3 asset audit', bg: '#1e7a45', fg: '#fff' },
+        { k: 'CH', label: 'CHG-2214', bg: '#8a5a1f', fg: '#fff' },
+        { k: 'NH', label: 'New-hire access', bg: '#6c3fd1', fg: '#fff' },
+        { k: 'PD', label: 'INC-4821', bg: '#e9e9ee', fg: '#26262b' }
+      ],
+
+      // onboarding
+      taskChips: taskData.map((t, i) => ({
+        label: t.label,
+        bg: this.state.task === i ? 'rgba(52,60,237,.08)' : '#ffffff',
+        border: this.state.task === i ? 'rgba(52,60,237,.45)' : 'rgba(0,0,0,.12)',
+        fg: this.state.task === i ? '#343ced' : '#3a3a40',
+        caret: this.state.task === i ? '#343ced' : '#8a8a90',
+        icon: this.state.task === i ? '●' : '+',
+        onClick: () => this.setState(st => ({ task: st.task === i ? null : i }))
+      })),
+      colleagues: peopleData.map((p, i) => ({
+        initials: p.initials, name: p.name, role: p.role, intent: this.state.intents[i] || p.intent,
+        cardBg: this.state.person === i ? 'rgba(52,60,237,.05)' : '#f8f8fa',
+        cardBorder: this.state.person === i ? 'rgba(52,60,237,.45)' : 'rgba(0,0,0,.07)',
+        avBg: this.state.person === i ? '#343ced' : 'rgba(52,60,237,.1)',
+        avFg: this.state.person === i ? '#ffffff' : '#343ced',
+        intentBg: modeStyles[this.state.intents[i] || p.intent].bg,
+        intentFg: modeStyles[this.state.intents[i] || p.intent].fg,
+        onClick: () => this.setState(st => ({ person: st.person === i ? null : i }))
+      })),
+      personOpen: this.state.person !== null,
+      person: Object.assign({}, peopleData[this.state.person === null ? 0 : this.state.person], {
+        modes: ['Delegate', 'Ask', 'Approval', 'Notify'].map(m => {
+          const pi = this.state.person === null ? 0 : this.state.person;
+          const cur = (this.state.intents[pi] || peopleData[pi].intent) === m;
+          return {
+            label: cur ? m + ' — current' : 'Use for ' + m.toLowerCase(),
+            bg: cur ? modeStyles[m].bg : '#ffffff',
+            border: cur ? 'rgba(52,60,237,.35)' : 'rgba(0,0,0,.12)',
+            fg: cur ? modeStyles[m].fg : '#3a3a40',
+            onClick: () => this.setState(st => ({ intents: Object.assign({}, st.intents, { [pi]: m }) }))
+          };
+        })
+      }),
+      closePerson: () => this.setState({ person: null }),
+      taskOpen: this.state.task !== null,
+      task: taskData[this.state.task === null ? 0 : this.state.task],
+      closeTask: () => this.setState({ task: null }),
+      tools: [
+        { k: 'M', name: 'Gmail', detail: 'Service-desk alias · alerts and requester mail', bg: '#ea4335', fg: '#fff', r: 1, w: 0, admin: false, size: '13px' },
+        { k: '31', name: 'Google Calendar', detail: 'Your meetings, on-call blocks, change windows', bg: '#4285f4', fg: '#fff', r: 1, w: 1, admin: false, size: '10px' },
+        { k: '#', name: 'Slack', detail: '#it-announcements, #it-oncall · post only', bg: '#611f69', fg: '#fff', r: 0, w: 1, admin: true, policy: 'Workspace app scopes', size: '13px' },
+        { k: 'JS', name: 'Jira Service Desk', detail: 'Queue IT-2 · you are the assignee of record', bg: '#2f6fd0', fg: '#fff', r: 1, w: 1, admin: true, policy: 'IT policy coworker-baseline-v2', size: '10px' },
+        { k: 'OK', name: 'Okta', detail: 'Group membership and device certs', bg: '#1e3a8a', fg: '#fff', r: 1, w: 0, admin: true, policy: 'IdP policy · write blocked for agents', size: '10px' },
+        { k: 'PD', name: 'PagerDuty', detail: 'IT-Ops escalation policy · incidents', bg: '#1e7a45', fg: '#fff', r: 1, w: 1, admin: true, policy: 'IT policy coworker-baseline-v2', size: '10px' },
+        { k: 'DD', name: 'Datadog', detail: 'Monitors and logs for orders-db, vpn-gw', bg: '#6c3fd1', fg: '#fff', r: 1, w: 0, admin: false, size: '10px' },
+        { k: 'CF', name: 'Confluence runbooks', detail: '38 runbooks · 11 owned by you', bg: '#2a6f5c', fg: '#fff', r: 1, w: 1, admin: false, size: '10px' },
+        { k: 'JF', name: 'Jamf', detail: 'Device inventory · no remote commands', bg: '#3a3a40', fg: '#fff', r: 1, w: 1, admin: false, size: '10px' }
+      ].map(t => ({
+        k: t.k, name: t.name, detail: t.detail, bg: t.bg, fg: t.fg, size: t.size,
+        rBg: t.r ? 'rgba(52,60,237,.1)' : 'rgba(0,0,0,.035)',
+        rFg: t.r ? '#343ced' : '#b4b4b9',
+        wBg: t.w ? 'rgba(52,60,237,.1)' : 'rgba(0,0,0,.035)',
+        wFg: t.w ? '#343ced' : '#b4b4b9',
+        lock: t.admin ? 'Admin-set' : 'Adjustable',
+        lockFg: t.admin ? '#7f5610' : '#266749',
+        lockSrc: t.admin ? t.policy : 'granted by you at connect'
+      })),
+      goals: [
+        { title: 'Cut first-response time on IT-2 below 15 minutes', pct: '72%', metric: '19 min now', barColor: '#343ced',
+          scope: 'Team OKR', scopeBg: 'rgba(52,60,237,.1)', scopeFg: '#343ced',
+          mine: 'I draft the reply for every pattern you answer the same way, so you only approve.',
+          src: 'IT-Ops Q3 OKR set by Dana Whitfield · measured from Jira SLA report, refreshed daily' },
+        { title: 'Zero day-one access gaps for new hires', pct: '90%', metric: '1 gap this quarter', barColor: '#266749',
+          scope: 'Company objective', scopeBg: 'rgba(38,103,73,.1)', scopeFg: '#266749',
+          mine: 'I assemble the access batch two days before each start date and bring it to you.',
+          src: 'FY26 objective "onboarding that works day one" (People Ops) · tracked against Workday start dates and the Okta provisioning log' },
+        { title: 'Evidence attached on every Sev-2 within 15 minutes', pct: '100%', metric: '9 of 9', barColor: '#266749',
+          scope: 'Compliance control', scopeBg: 'rgba(127,86,16,.1)', scopeFg: '#7f5610',
+          mine: 'I capture the runbook log set automatically the moment an incident opens.',
+          src: 'SOC 2 control CC7.3, owned by Security · evidenced in PagerDuty timelines and runbook INC-DB-02' },
+        { title: 'Close the Q3 asset audit with every serial explained', pct: '60%', metric: '9 of 15 matched', barColor: '#7f5610',
+          scope: 'Team commitment', scopeBg: 'rgba(52,60,237,.1)', scopeFg: '#343ced',
+          mine: 'I pre-match serials in a scratch column and hand you only the unexplained ones.',
+          src: 'Finance asset audit request to IT-Ops · Jamf inventory vs Q3 audit sheet · closes Friday' }
+      ],
+      seeCards: [
+        { title: 'Projects you are in the middle of', items: [
+          { text: 'Q3 laptop refresh — 412 devices, audit closes Friday', src: 'Jamf inventory · Q3 audit sheet' },
+          { text: 'SSO migration wave 2 — 6 apps left', src: 'Jira epic IT-2841 · you are the reporter' },
+          { text: 'Service desk SLA rework with Dana', src: 'Recurring Tue meeting · shared doc edits' }
+        ] },
+        { title: 'Systems you own', items: [
+          { text: 'Okta groups: it-ops-*, vpn-standard', src: 'Okta · you are listed group owner' },
+          { text: 'VPN certificate rotation (VPN-CERT-04)', src: 'Confluence page owner · 9 edits by you' },
+          { text: 'Service desk queue IT-2 and its templates', src: 'Jira project admin role' }
+        ] },
+        { title: 'Things you do on a rhythm', items: [
+          { text: 'Monday: new-hire access batch, ~3 hires', src: 'Workday starts · 11 batches in 90 days' },
+          { text: 'Friday: incident review with Sana', src: 'Calendar · weekly since March' },
+          { text: 'Daily 8am: triage overnight tickets', src: 'Jira first-touch times, 90 days' }
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
